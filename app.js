@@ -1,13 +1,13 @@
 'use strict';
 const services = [
- ['Garçom e garçonete','Atendimento aos convidados, serviço de mesas e apoio durante a recepção.'],
- ['Barman','Preparo de bebidas e coquetéis para acompanhar cada celebração.'],
- ['Segurança','Profissionais de segurança para eventos, com requisitos de qualificação a verificar na contratação.'],
- ['Recepção','Boas-vindas, orientação de convidados e organização da entrada.'],
- ['DJ','Seleção musical para dar o ritmo da festa e da pista de dança.'],
- ['Bandas e música','Apresentações ao vivo para cerimônias, festas e encontros.'],
- ['Buffet','Gastronomia e opções de alimentação para diferentes formatos de evento.'],
- ['Copeiro e apoio','Organização de utensílios e apoio à equipe de atendimento.']
+ ['Garçons e atendimento','Serviço de salão, atendimento aos convidados e apoio durante toda a recepção.'],
+ ['Bartenders e coquetelaria','Drinks, coquetéis e serviço de bar preparados para o estilo do seu evento.'],
+ ['Segurança de eventos','Controle de acesso, orientação do público e suporte à operação do evento.'],
+ ['Recepção e credenciamento','Boas-vindas, confirmação de convidados, credenciamento e organização da entrada.'],
+ ['DJs e sonorização','Seleção musical, pista de dança e soluções de som para cada momento da festa.'],
+ ['Bandas e música ao vivo','Apresentações para cerimônias, recepções, festas e encontros corporativos.'],
+ ['Buffet e gastronomia','Cardápios, serviço de alimentação e experiências gastronômicas para diferentes formatos.'],
+ ['Produção e apoio','Montagem, organização, copa e suporte operacional antes, durante e após o evento.']
 ];
 const cards = document.getElementById('cards');
 const service = document.getElementById('service');
