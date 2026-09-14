@@ -18,13 +18,16 @@ function render() {
  cards.replaceChildren();
  const selected = services.filter(([name,copy]) => (!service.value || name === service.value) && norm(name+' '+copy).includes(norm(term.value)));
  selected.forEach(([name,copy]) => {
+  const index = services.findIndex(item=>item[0]===name);
   const card = document.createElement('article'); card.className='card';
-  const number = document.createElement('span'); number.className='number'; number.textContent=String(services.findIndex(item=>item[0]===name)+1).padStart(2,'0'); number.setAttribute('aria-hidden','true');
+  const image = document.createElement('div'); image.className='card-image i'+index; image.setAttribute('role','img'); image.setAttribute('aria-label','Imagem ilustrativa de '+name);
+  const body = document.createElement('div'); body.className='card-body';
+  const number = document.createElement('span'); number.className='number'; number.textContent=String(index+1).padStart(2,'0'); number.setAttribute('aria-hidden','true');
   const title = document.createElement('h3'); title.textContent=name;
   const text = document.createElement('p'); text.textContent=copy;
   const button = document.createElement('button'); button.type='button'; button.textContent='Conhecer serviço'; button.setAttribute('aria-label','Conhecer serviço: '+name);
   button.addEventListener('click',()=>{document.getElementById('detail-title').textContent=name; document.getElementById('detail-copy').textContent=copy; modal.showModal();});
-  card.append(number,title,text,button); cards.append(card);
+  image.append(number); body.append(title,text,button); card.append(image,body); cards.append(card);
  });
  document.getElementById('count').textContent=selected.length+' de '+services.length+' categorias';
  document.getElementById('empty').hidden=selected.length!==0;

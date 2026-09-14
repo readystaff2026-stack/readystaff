@@ -1,9 +1,9 @@
 # ReadyStaff — vitrine inicial
 
-Primeira versão estática, em português, com layout responsivo azul-marinho e verde, oito categorias, filtro por categoria/palavra, detalhes em diálogo e perguntas frequentes.
+Vitrine estática responsiva, em português, com oito categorias ilustradas, filtro por categoria/palavra, detalhes em diálogo e perguntas frequentes.
 
 ## Baixar
-No GitHub: Code > Download ZIP. Extraia o arquivo. index.html e app.js devem permanecer juntos.
+No GitHub: Code > Download ZIP. Extraia o arquivo e mantenha `index.html`, `app.js` e a pasta `assets` juntos.
 
 ## Abrir
 Abra index.html no navegador. Não exige instalação ou compilação.
@@ -17,11 +17,10 @@ Confirme a prévia antes de associar readystaff.site pelo painel de domínios pe
 Esta é uma vitrine de pré-lançamento, NÃO um marketplace operacional.
 - Busca filtra categorias; não há profissionais cadastrados.
 - Não envia formulários, não coleta dados pessoais e não processa pagamentos.
-- Cadastro, login, fotos, moderação, busca regional e contato precisam de backend validado.
+- Cadastro, login, moderação, busca regional e contato precisam de backend validado.
 - Supabase NÃO foi conectado; nenhuma credencial está incluída.
-- Logotipo: usa apenas assinatura tipográfica provisória. O PNG aprovado deve ser integrado depois, sem redesenhar a marca.
+- O logotipo oficial e as imagens ilustrativas das categorias ficam na pasta `assets`.
 - Nenhum telefone, e-mail comercial, avaliação ou profissional fictício foi publicado.
-- Não foi publicado no domínio automaticamente.
 
 ## Verificações manuais antes da publicação
 1. Abrir index.html em desktop e celular.
