@@ -1,6 +1,6 @@
 # ReadyStaff — vitrine inicial
 
-Plataforma responsiva, em português, com oito categorias ilustradas, filtro por categoria/palavra, cadastro de clientes e profissionais, autenticação e área inicial da conta.
+Plataforma responsiva, em português, com oito categorias ilustradas, filtro por categoria/palavra, entrada guiada para contratantes e profissionais, autenticação e área inicial da conta.
 
 ## Baixar
 No GitHub: Code > Download ZIP. Extraia o arquivo e mantenha `index.html`, `app.js`, `auth.js` e a pasta `assets` juntos.
@@ -18,6 +18,7 @@ O frontend usa `@supabase/supabase-js` 2.116.0 com a chave pública do projeto. 
 
 ## Escopo e limites
 - O cadastro e o login estão disponíveis para clientes e profissionais.
+- A abertura do site separa o caminho de contratante e profissional, conduzindo cada público ao formulário adequado.
 - Perfis profissionais começam com status `pending` e dependem de aprovação administrativa.
 - Busca pública de profissionais, portfólio, pedidos de orçamento, recuperação de senha e painel administrativo serão adicionados nas próximas etapas.
 - Não processa pagamentos.

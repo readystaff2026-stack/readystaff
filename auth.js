@@ -7,6 +7,7 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
 });
 
 const modal = document.getElementById('auth-modal');
+const entryModal = document.getElementById('entry-modal');
 const loginForm = document.getElementById('login-form');
 const signupForm = document.getElementById('signup-form');
 const accountView = document.getElementById('account-view');
@@ -14,6 +15,19 @@ const message = document.getElementById('auth-message');
 const tabs = [...document.querySelectorAll('[data-auth-tab]')];
 const professionalFields = document.getElementById('professional-fields');
 const headerButton = document.getElementById('open-auth');
+const roleChoice = signupForm.querySelector('.role-options').parentElement;
+const authTitle = document.getElementById('auth-title');
+const authSubtitle = document.getElementById('auth-subtitle');
+const roleNote = document.createElement('div');
+roleNote.className = 'role-locked-note';
+roleNote.hidden = true;
+const roleNoteText = document.createElement('span');
+const roleSwitch = document.createElement('button');
+roleSwitch.className = 'role-switch';
+roleSwitch.type = 'button';
+roleSwitch.textContent = 'Trocar tipo de cadastro';
+roleNote.append(roleNoteText, document.createTextNode(' · '), roleSwitch);
+signupForm.prepend(roleNote);
 let currentSession = null;
 
 function showMessage(copy, type = 'info') {
@@ -38,8 +52,8 @@ function translateError(error) {
 
 function setLoading(form, loading) {
   const submit = form.querySelector('[type="submit"]');
+  if (loading) submit.dataset.originalText = submit.textContent;
   submit.disabled = loading;
-  submit.dataset.originalText ||= submit.textContent;
   submit.textContent = loading ? 'Aguarde...' : submit.dataset.originalText;
 }
 
@@ -54,6 +68,10 @@ function setView(view) {
     tab.classList.toggle('active', active);
     tab.setAttribute('aria-selected', String(active));
   });
+  if (view === 'login') {
+    authTitle.textContent = 'Entre na sua conta';
+    authSubtitle.textContent = 'Acesse seu cadastro de contratante ou profissional.';
+  }
 }
 
 function setRole(role) {
@@ -61,10 +79,47 @@ function setRole(role) {
   if (input) input.checked = true;
   professionalFields.hidden = role !== 'professional';
   professionalFields.querySelectorAll('textarea').forEach(field => field.required = role === 'professional');
+  signupForm.querySelector('.auth-submit').textContent = role === 'professional'
+    ? 'Enviar cadastro profissional'
+    : 'Criar cadastro de contratante';
+}
+
+function unlockRoleChoice() {
+  roleChoice.hidden = false;
+  roleNote.hidden = true;
+  authTitle.textContent = 'Crie sua conta';
+  authSubtitle.textContent = 'Escolha como você quer usar a ReadyStaff e preencha seus dados.';
+}
+
+function lockRoleChoice(role) {
+  setRole(role);
+  roleChoice.hidden = true;
+  roleNote.hidden = false;
+  const professional = role === 'professional';
+  authTitle.textContent = professional ? 'Cadastro profissional' : 'Cadastro de contratante';
+  authSubtitle.textContent = professional
+    ? 'Apresente seu trabalho, selecione suas categorias e envie seu perfil para análise.'
+    : 'Crie sua conta para encontrar profissionais e organizar seu evento.';
+  roleNoteText.textContent = professional ? 'Você está criando um perfil profissional' : 'Você está criando uma conta de contratante';
+}
+
+function markEntrySeen() {
+  try { sessionStorage.setItem('readystaff-entry-seen', 'true'); } catch (_error) { /* Navegação privada pode bloquear o armazenamento. */ }
+}
+
+function hasSeenEntry() {
+  try { return sessionStorage.getItem('readystaff-entry-seen') === 'true'; } catch (_error) { return false; }
+}
+
+function openEntry() {
+  if (modal.open) modal.close();
+  if (!entryModal.open) entryModal.showModal();
 }
 
 async function showAccount(session) {
   currentSession = session;
+  authTitle.textContent = 'Minha conta';
+  authSubtitle.textContent = 'Acompanhe seu cadastro e as novidades da ReadyStaff.';
   document.querySelector('.auth-tabs').hidden = true;
   loginForm.hidden = true;
   signupForm.hidden = true;
@@ -106,13 +161,14 @@ async function showAccount(session) {
 }
 
 async function openAuth(role) {
+  if (entryModal.open) entryModal.close();
   if (!modal.open) modal.showModal();
   if (currentSession) {
     await showAccount(currentSession);
     return;
   }
   setView(role ? 'signup' : 'login');
-  if (role) setRole(role);
+  if (role) lockRoleChoice(role);
 }
 
 document.querySelectorAll('[data-open-auth]').forEach(button => {
@@ -120,10 +176,28 @@ document.querySelectorAll('[data-open-auth]').forEach(button => {
 });
 
 document.getElementById('close-auth').addEventListener('click', () => modal.close());
-tabs.forEach(tab => tab.addEventListener('click', () => setView(tab.dataset.authTab)));
+tabs.forEach(tab => tab.addEventListener('click', () => {
+  setView(tab.dataset.authTab);
+  if (tab.dataset.authTab === 'signup') unlockRoleChoice();
+}));
 signupForm.querySelectorAll('input[name="role"]').forEach(input => {
   input.addEventListener('change', () => setRole(input.value));
 });
+document.querySelectorAll('[data-entry-role]').forEach(button => {
+  button.addEventListener('click', () => {
+    markEntrySeen();
+    openAuth(button.dataset.entryRole);
+  });
+});
+document.getElementById('entry-login').addEventListener('click', () => {
+  markEntrySeen();
+  openAuth();
+});
+document.getElementById('entry-explore').addEventListener('click', () => {
+  markEntrySeen();
+  entryModal.close();
+});
+roleSwitch.addEventListener('click', openEntry);
 
 loginForm.addEventListener('submit', async event => {
   event.preventDefault();
@@ -176,11 +250,13 @@ signupForm.addEventListener('submit', async event => {
   if (data.session) {
     signupForm.reset();
     setRole('client');
+    unlockRoleChoice();
     return showAccount(data.session);
   }
 
   signupForm.reset();
   setRole('client');
+  unlockRoleChoice();
   setView('login');
   showMessage('Cadastro recebido! Confira seu e-mail para confirmar a conta e depois faça o login.', 'success');
 });
@@ -196,6 +272,7 @@ document.getElementById('sign-out').addEventListener('click', async () => {
 const { data: { session } } = await supabase.auth.getSession();
 currentSession = session;
 if (session) headerButton.textContent = 'Minha conta';
+if (!session && !hasSeenEntry()) setTimeout(openEntry, 250);
 
 supabase.auth.onAuthStateChange((_event, sessionValue) => {
   currentSession = sessionValue;
