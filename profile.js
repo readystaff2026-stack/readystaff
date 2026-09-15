@@ -1,5 +1,5 @@
 import { supabase } from './supabase-client.js';
-import { optimizeImage, validateImageFile } from './image-utils.js';
+import { imageExtension, optimizeImage, validateImageFile } from './image-utils.js?v=20260915-3';
 
 const params = new URLSearchParams(location.search);
 const message = document.getElementById('profile-message');
@@ -232,8 +232,8 @@ async function uploadImage(file, prefix) {
   const optimized = await optimizeImage(file, prefix === 'avatar'
     ? { maxWidth: 1000, maxHeight: 1000, quality: 0.82 }
     : { maxWidth: 1800, maxHeight: 1800, quality: 0.8 });
-  const path = `${session.user.id}/${prefix}-${crypto.randomUUID()}.webp`;
-  const { error } = await supabase.storage.from('professional-media').upload(path, optimized, { cacheControl: '3600', contentType: 'image/webp', upsert: false });
+  const path = `${session.user.id}/${prefix}-${crypto.randomUUID()}.${imageExtension(optimized)}`;
+  const { error } = await supabase.storage.from('professional-media').upload(path, optimized, { cacheControl: '3600', contentType: optimized.type, upsert: false });
   if (error) throw error;
   const { data } = supabase.storage.from('professional-media').getPublicUrl(path);
   return { path, url: data.publicUrl };

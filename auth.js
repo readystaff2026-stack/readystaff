@@ -1,5 +1,5 @@
 import { supabase } from './supabase-client.js';
-import { optimizeImage, validateImageFile } from './image-utils.js';
+import { imageExtension, optimizeImage, validateImageFile } from './image-utils.js?v=20260915-3';
 
 const modal = document.getElementById('auth-modal');
 const entryModal = document.getElementById('entry-modal');
@@ -123,8 +123,8 @@ async function saveClientPhoto() {
     setClientPhotoLoading(true);
     showClientPhotoMessage('Otimizando e enviando sua foto...');
     const optimized = await optimizeImage(file, { maxWidth: 900, maxHeight: 900, quality: 0.82 });
-    const path = `${currentSession.user.id}/client-avatar-${crypto.randomUUID()}.webp`;
-    const { error: uploadError } = await supabase.storage.from('professional-media').upload(path, optimized, { cacheControl: '3600', contentType: 'image/webp', upsert: false });
+    const path = `${currentSession.user.id}/client-avatar-${crypto.randomUUID()}.${imageExtension(optimized)}`;
+    const { error: uploadError } = await supabase.storage.from('professional-media').upload(path, optimized, { cacheControl: '3600', contentType: optimized.type, upsert: false });
     if (uploadError) throw uploadError;
     const { data: publicUrl } = supabase.storage.from('professional-media').getPublicUrl(path);
     const previousPath = currentAccountProfile.avatar_storage_path;

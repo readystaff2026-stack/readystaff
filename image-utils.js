@@ -1,5 +1,6 @@
 const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
 const maxInputSize = 12 * 1024 * 1024;
+const directUploadLimit = 5 * 1024 * 1024;
 
 export function validateImageFile(file) {
   if (!file || !allowedTypes.includes(file.type)) throw new Error('Use uma imagem JPG, PNG, WebP ou AVIF.');
@@ -48,6 +49,9 @@ function canvasBlob(canvas, type, quality) {
 
 export async function optimizeImage(file, { maxWidth = 1600, maxHeight = 1600, quality = 0.8 } = {}) {
   validateImageFile(file);
+  // Arquivos que já cabem no limite do bucket não precisam ser decodificados
+  // pelo navegador. Isso evita incompatibilidades de fotos vindas do Android.
+  if (file.size <= directUploadLimit) return file;
   const image = await loadImage(file);
 
   const scale = Math.min(1, maxWidth / image.width, maxHeight / image.height);
@@ -65,4 +69,8 @@ export async function optimizeImage(file, { maxWidth = 1600, maxHeight = 1600, q
   const blob = await canvasBlob(canvas, 'image/webp', quality);
   const originalName = file.name.replace(/\.[^.]+$/, '') || 'foto';
   return new File([blob], `${originalName}.webp`, { type: 'image/webp', lastModified: Date.now() });
+}
+
+export function imageExtension(file) {
+  return ({ 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/avif': 'avif' })[file.type] || 'img';
 }
