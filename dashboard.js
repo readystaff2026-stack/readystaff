@@ -188,7 +188,7 @@ async function start() {
   if (!session) {
     message.className = 'message error';
     message.textContent = 'Entre na sua conta para abrir o painel.';
-    setTimeout(() => location.href = 'index.html', 1800);
+    location.replace('index.html?entrar=1');
     return;
   }
   currentSession = session;
