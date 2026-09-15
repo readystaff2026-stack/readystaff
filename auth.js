@@ -1,10 +1,4 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/+esm';
-
-const supabaseUrl = 'https://wsutvfonuualpckowzpv.supabase.co';
-const supabaseKey = 'sb_publishable_g9DWS8l0nuhGbe4wvNZTjA_EXydGO_R';
-const supabase = createClient(supabaseUrl, supabaseKey, {
-  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-});
+import { supabase } from './supabase-client.js';
 
 const modal = document.getElementById('auth-modal');
 const entryModal = document.getElementById('entry-modal');
