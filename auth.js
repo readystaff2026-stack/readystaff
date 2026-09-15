@@ -438,6 +438,11 @@ loginForm.addEventListener('submit', async event => {
   });
   setLoading(loginForm, false);
   if (error) return showMessage(translateError(error), 'error');
+  const { data: signedProfile } = await supabase.from('profiles').select('role').eq('id', data.session.user.id).maybeSingle();
+  if (signedProfile?.role === 'professional') {
+    location.replace('painel.html');
+    return;
+  }
   await showAccount(data.session);
 });
 
@@ -512,6 +517,10 @@ signupForm.addEventListener('submit', async event => {
     signupForm.reset();
     setRole('client');
     unlockRoleChoice();
+    if (role === 'professional') {
+      location.replace('painel.html');
+      return;
+    }
     return showAccount(data.session);
   }
 
@@ -536,9 +545,19 @@ const { data: { session } } = await supabase.auth.getSession();
 configureProfessionalSignup();
 currentSession = session;
 if (session) headerButton.textContent = 'Minha conta';
-if (new URLSearchParams(location.search).get('reset') === '1') {
+const pageParams = new URLSearchParams(location.search);
+if (session && pageParams.get('reset') !== '1') {
+  const { data: activeProfile } = await supabase.from('profiles').select('role').eq('id', session.user.id).maybeSingle();
+  if (activeProfile?.role === 'professional') location.replace('painel.html');
+}
+if (pageParams.get('reset') === '1') {
   if (!modal.open) modal.showModal();
   setView('reset');
+} else if (pageParams.get('account') === 'deleted') {
+  if (!modal.open) modal.showModal();
+  setView('login');
+  showMessage('Sua conta e os dados relacionados foram excluídos definitivamente.', 'success');
+  history.replaceState({}, '', location.pathname);
 } else if (!session && !hasSeenEntry()) setTimeout(openEntry, 250);
 
 supabase.auth.onAuthStateChange((event, sessionValue) => {

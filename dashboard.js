@@ -5,6 +5,7 @@ const message = document.getElementById('dashboard-message');
 let role = '';
 let requests = [];
 let activeFilter = 'all';
+let currentSession = null;
 const labels = { pending: 'Pendente', accepted: 'Aceito', declined: 'Recusado', cancelled: 'Cancelado' };
 const money = value => value ? Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'Não informado';
 const date = value => new Date(`${value}T12:00:00`).toLocaleDateString('pt-BR');
@@ -139,6 +140,8 @@ async function loadRequests() {
     return;
   }
   requests = data || [];
+  document.getElementById('pending-count').textContent = String(requests.filter(item => item.status === 'pending').length);
+  document.getElementById('total-count').textContent = String(requests.length);
   render();
 }
 
@@ -148,6 +151,37 @@ document.querySelectorAll('[data-filter]').forEach(button => button.addEventList
   render();
 }));
 document.getElementById('sign-out').addEventListener('click', async () => { await supabase.auth.signOut(); location.href = 'index.html'; });
+const deleteDialog = document.getElementById('delete-dialog');
+const deleteForm = document.getElementById('delete-form');
+document.getElementById('open-delete-account').addEventListener('click', () => {
+  deleteForm.reset();
+  document.getElementById('delete-message').hidden = true;
+  deleteDialog.showModal();
+});
+document.getElementById('close-delete').addEventListener('click', () => deleteDialog.close());
+deleteForm.addEventListener('submit', async event => {
+  event.preventDefault();
+  const confirmation = String(new FormData(deleteForm).get('confirmation')).trim();
+  const errorBox = document.getElementById('delete-message');
+  if (confirmation !== 'EXCLUIR') {
+    errorBox.textContent = 'Digite EXCLUIR exatamente como mostrado.';
+    errorBox.hidden = false;
+    return;
+  }
+  const button = deleteForm.querySelector('[type="submit"]');
+  button.disabled = true;
+  button.textContent = 'Excluindo conta...';
+  const { data, error } = await supabase.functions.invoke('delete-account', { body: {} });
+  if (error || !data?.deleted) {
+    errorBox.textContent = data?.error || error?.message || 'Não foi possível excluir a conta.';
+    errorBox.hidden = false;
+    button.disabled = false;
+    button.textContent = 'Excluir minha conta definitivamente';
+    return;
+  }
+  await supabase.auth.signOut({ scope: 'local' });
+  location.replace('index.html?account=deleted');
+});
 
 async function start() {
   const { data: { session } } = await supabase.auth.getSession();
@@ -157,12 +191,27 @@ async function start() {
     setTimeout(() => location.href = 'index.html', 1800);
     return;
   }
+  currentSession = session;
   const { data: profile, error } = await supabase.from('profiles').select('full_name, role').eq('id', session.user.id).single();
   if (error) return;
   role = profile.role;
-  document.getElementById('dashboard-title').textContent = role === 'professional' ? 'Pedidos recebidos' : 'Meus orçamentos';
-  document.getElementById('dashboard-copy').textContent = role === 'professional' ? `Olá, ${profile.full_name}. Responda aos clientes interessados no seu trabalho.` : `Olá, ${profile.full_name}. Acompanhe aqui seus pedidos e respostas.`;
-  document.getElementById('edit-profile').hidden = role !== 'professional';
+  const professional = role === 'professional';
+  document.getElementById('dashboard-title').textContent = professional ? 'Minha área profissional' : 'Meus orçamentos';
+  document.getElementById('dashboard-copy').textContent = professional ? `Olá, ${profile.full_name}. Gerencie seu perfil e responda aos clientes interessados no seu trabalho.` : `Olá, ${profile.full_name}. Encontre profissionais e acompanhe aqui seus pedidos.`;
+  document.getElementById('area-label').textContent = professional ? 'Painel do profissional' : 'Painel do contratante';
+  document.getElementById('edit-profile').hidden = !professional;
+  document.getElementById('browse-professionals').hidden = professional;
+  document.getElementById('professional-overview').hidden = !professional;
+  if (professional) {
+    document.getElementById('brand-link').href = 'painel.html';
+    const headerLink = document.getElementById('header-link');
+    headerLink.href = 'perfil.html?me=1';
+    headerLink.textContent = 'Meu perfil público →';
+    const { data: professionalProfile } = await supabase.from('professional_profiles').select('display_name, bio, avatar_url, professional_categories(category_id)').eq('id', session.user.id).maybeSingle();
+    const categoryCount = professionalProfile?.professional_categories?.length || 0;
+    const complete = Boolean(professionalProfile?.display_name && professionalProfile?.bio && categoryCount);
+    document.getElementById('profile-state').textContent = complete ? 'Publicado' : 'Complete agora';
+  }
   await loadRequests();
 }
 start();

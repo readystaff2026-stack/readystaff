@@ -422,6 +422,10 @@ async function start() {
   }
   const ownProfile = params.get('me') === '1';
   profileId = ownProfile ? session?.user?.id : params.get('id');
+  if (viewerProfile?.role === 'professional' && profileId !== session.user.id) {
+    location.replace('painel.html');
+    return;
+  }
   if (!profileId) {
     setMessage(ownProfile ? 'Entre na sua conta para editar o perfil profissional.' : 'Perfil não informado.', 'error');
     return;
