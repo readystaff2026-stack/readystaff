@@ -19,9 +19,10 @@ O frontend usa `@supabase/supabase-js` 2.116.0 com a chave pública do projeto. 
 ## Escopo e limites
 - O cadastro e o login estão disponíveis para clientes e profissionais.
 - A abertura do site separa o caminho de contratante e profissional, conduzindo cada público ao formulário adequado.
-- Perfis profissionais são publicados após a confirmação da conta, sem fila de aprovação manual.
+- Perfis profissionais são publicados imediatamente, sem confirmação obrigatória de e-mail e sem fila de aprovação manual.
 - Profissionais aparecem na página inicial e possuem página pública individual.
-- O profissional pode editar foto, apresentação, categorias, localização, disponibilidade, Instagram, valor por categoria, aceite de propostas e até oito fotos do portfólio.
+- O profissional pode editar foto, apresentação, categorias, localização, disponibilidade, Instagram, valor por categoria, aceite de propostas e até três fotos opcionais no portfólio.
+- O contratante pode adicionar, trocar ou remover uma foto opcional na própria conta.
 - O contratante pode filtrar por profissão e orçamento máximo; o menor valor cadastrado orienta o filtro.
 - Pedidos de orçamento, recuperação de senha, avaliações e painel administrativo serão adicionados nas próximas etapas.
 - Não processa pagamentos.
@@ -34,6 +35,7 @@ O frontend usa `@supabase/supabase-js` 2.116.0 com a chave pública do projeto. 
 3. Testar Limpar filtros.
 4. Abrir detalhes, fechar pelo botão e por Escape.
 5. Abrir cadastro como cliente e como profissional.
-6. Confirmar e-mail, entrar, conferir a área da conta e sair.
-7. Navegar por teclado e conferir menu, perguntas e links internos.
-8. Confirmar ausência de erros no console.
+6. Criar uma conta com acesso imediato, entrar, conferir a área da conta e sair.
+7. Testar fotos horizontais e verticais no portfólio e a foto opcional do contratante.
+8. Navegar por teclado e conferir menu, perguntas e links internos.
+9. Confirmar ausência de erros no console.

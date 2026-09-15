@@ -267,17 +267,22 @@ async function saveCategories(selectedOffers) {
 }
 
 async function uploadPortfolio(files) {
-  const available = 8 - portfolio.length;
+  const available = 3 - portfolio.length;
+  if (available <= 0 && files.length) throw new Error('Seu portfólio já possui o limite de 3 fotos.');
   if (files.length > available) throw new Error(`Você pode adicionar mais ${available} ${available === 1 ? 'imagem' : 'imagens'} ao portfólio.`);
+  const firstSortOrder = portfolio.length;
   for (const [index, file] of files.entries()) {
     const uploaded = await uploadImage(file, 'portfolio');
     const { data, error } = await supabase.from('professional_portfolio').insert({
       professional_id: profileId,
       image_url: uploaded.url,
       storage_path: uploaded.path,
-      sort_order: portfolio.length + index
+      sort_order: firstSortOrder + index
     }).select('id, image_url, caption, storage_path, sort_order').single();
-    if (error) throw error;
+    if (error) {
+      await supabase.storage.from('professional-media').remove([uploaded.path]);
+      throw error;
+    }
     portfolio.push(data);
   }
 }
@@ -303,6 +308,11 @@ form.addEventListener('submit', async event => {
   const data = new FormData(form);
   const selectedIds = data.getAll('categories').map(Number);
   if (!selectedIds.length) return setEditorMessage('Selecione pelo menos uma categoria.', 'error');
+  const portfolioFiles = [...document.getElementById('portfolio-files').files];
+  const availablePhotos = 3 - portfolio.length;
+  if (portfolioFiles.length > availablePhotos) {
+    return setEditorMessage(`Você pode adicionar no máximo ${availablePhotos} ${availablePhotos === 1 ? 'foto' : 'fotos'} agora.`, 'error');
+  }
   const selectedOffers = selectedIds.map(categoryId => ({
     category_id: categoryId,
     price: Number(document.querySelector(`[data-price-for="${categoryId}"]`).value),
@@ -332,7 +342,7 @@ form.addEventListener('submit', async event => {
     const { data: updated, error } = await supabase.from('professional_profiles').update(updates).eq('id', profileId).select().single();
     if (error) throw error;
     await saveCategories(selectedOffers);
-    await uploadPortfolio([...document.getElementById('portfolio-files').files]);
+    await uploadPortfolio(portfolioFiles);
     profile = { ...profile, ...updated, professional_categories: categories.filter(category => currentCategoryIds.has(category.id)).map(category => ({ ...currentOfferings.get(category.id), categories: category })) };
     document.getElementById('avatar-file').value = '';
     document.getElementById('portfolio-files').value = '';

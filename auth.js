@@ -15,6 +15,7 @@ const message = document.getElementById('auth-message');
 const tabs = [...document.querySelectorAll('[data-auth-tab]')];
 const professionalFields = document.getElementById('professional-fields');
 const headerButton = document.getElementById('open-auth');
+document.querySelector('.auth-note').textContent = 'Cadastro gratuito com acesso imediato. As fotos são opcionais.';
 const roleChoice = signupForm.querySelector('.role-options').parentElement;
 const authTitle = document.getElementById('auth-title');
 const authSubtitle = document.getElementById('auth-subtitle');
@@ -29,6 +30,160 @@ roleSwitch.textContent = 'Trocar tipo de cadastro';
 roleNote.append(roleNoteText, document.createTextNode(' · '), roleSwitch);
 signupForm.prepend(roleNote);
 let currentSession = null;
+let currentAccountProfile = null;
+let clientPreviewUrl = '';
+const allowedPhotoTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
+const maxPhotoSize = 5 * 1024 * 1024;
+
+const clientPhotoEditor = document.createElement('section');
+clientPhotoEditor.id = 'client-photo-editor';
+clientPhotoEditor.className = 'client-photo-editor';
+clientPhotoEditor.hidden = true;
+clientPhotoEditor.innerHTML = `
+  <h4>Sua foto de perfil</h4>
+  <p>A foto é opcional e ajuda a personalizar sua conta de contratante.</p>
+  <div class="client-photo-layout">
+    <div id="client-photo-preview" class="client-photo-preview" aria-label="Prévia da foto"></div>
+    <label class="client-photo-input">
+      <span>Escolher uma foto</span>
+      <input id="client-photo-file" type="file" accept="image/jpeg,image/png,image/webp,image/avif">
+      <small>JPG, PNG, WebP ou AVIF, até 5 MB.</small>
+    </label>
+  </div>
+  <div class="client-photo-actions">
+    <button id="save-client-photo" class="button teal" type="button">Salvar foto</button>
+    <button id="remove-client-photo" class="button ghost" type="button" hidden>Remover foto</button>
+  </div>
+  <p id="client-photo-message" class="client-photo-message" hidden aria-live="polite"></p>`;
+accountView.querySelector('.account-actions').before(clientPhotoEditor);
+
+function safeImageUrl(value) {
+  try {
+    const url = new URL(value);
+    return ['http:', 'https:'].includes(url.protocol) ? url.href : '';
+  } catch (_error) {
+    return '';
+  }
+}
+
+function initials(name = 'RS') {
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join('').toUpperCase() || 'RS';
+}
+
+function validatePhoto(file) {
+  if (!allowedPhotoTypes.includes(file.type)) throw new Error('Use uma imagem JPG, PNG, WebP ou AVIF.');
+  if (file.size > maxPhotoSize) throw new Error('A imagem deve ter no máximo 5 MB.');
+}
+
+function photoExtension(file) {
+  return ({ 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/avif': 'avif' })[file.type];
+}
+
+function showClientPhotoMessage(copy, type = '') {
+  const target = document.getElementById('client-photo-message');
+  target.textContent = copy;
+  target.className = `client-photo-message ${type}`.trim();
+  target.hidden = !copy;
+}
+
+function renderClientPhoto(profile, temporaryUrl = '') {
+  const preview = document.getElementById('client-photo-preview');
+  const url = temporaryUrl || safeImageUrl(profile?.avatar_url);
+  preview.replaceChildren();
+  if (url) {
+    const image = document.createElement('img');
+    image.src = url;
+    image.alt = `Foto de ${profile?.full_name || 'contratante'}`;
+    preview.append(image);
+  } else {
+    preview.textContent = initials(profile?.full_name);
+  }
+  document.getElementById('remove-client-photo').hidden = !profile?.avatar_url;
+}
+
+function setClientPhotoLoading(loading) {
+  const save = document.getElementById('save-client-photo');
+  const remove = document.getElementById('remove-client-photo');
+  save.disabled = loading;
+  remove.disabled = loading;
+  save.textContent = loading ? 'Salvando...' : 'Salvar foto';
+}
+
+async function saveClientPhoto() {
+  const input = document.getElementById('client-photo-file');
+  const file = input.files[0];
+  if (!file) return showClientPhotoMessage('Escolha uma foto antes de salvar.', 'error');
+  try {
+    validatePhoto(file);
+    setClientPhotoLoading(true);
+    showClientPhotoMessage('Enviando sua foto...');
+    const path = `${currentSession.user.id}/client-avatar-${crypto.randomUUID()}.${photoExtension(file)}`;
+    const { error: uploadError } = await supabase.storage.from('professional-media').upload(path, file, { cacheControl: '3600', upsert: false });
+    if (uploadError) throw uploadError;
+    const { data: publicUrl } = supabase.storage.from('professional-media').getPublicUrl(path);
+    const previousPath = currentAccountProfile.avatar_storage_path;
+    const { data: updated, error: updateError } = await supabase
+      .from('profiles')
+      .update({ avatar_url: publicUrl.publicUrl, avatar_storage_path: path })
+      .eq('id', currentSession.user.id)
+      .select('avatar_url, avatar_storage_path')
+      .single();
+    if (updateError) {
+      await supabase.storage.from('professional-media').remove([path]);
+      throw updateError;
+    }
+    if (previousPath && previousPath !== path) await supabase.storage.from('professional-media').remove([previousPath]);
+    currentAccountProfile = { ...currentAccountProfile, ...updated };
+    input.value = '';
+    if (clientPreviewUrl) URL.revokeObjectURL(clientPreviewUrl);
+    clientPreviewUrl = '';
+    renderClientPhoto(currentAccountProfile);
+    showClientPhotoMessage('Foto salva com sucesso!');
+  } catch (error) {
+    showClientPhotoMessage(error.message || 'Não foi possível salvar a foto.', 'error');
+  } finally {
+    setClientPhotoLoading(false);
+  }
+}
+
+async function removeClientPhoto() {
+  if (!currentAccountProfile?.avatar_url || !confirm('Remover sua foto de perfil?')) return;
+  try {
+    setClientPhotoLoading(true);
+    showClientPhotoMessage('Removendo sua foto...');
+    const previousPath = currentAccountProfile.avatar_storage_path;
+    const { error } = await supabase
+      .from('profiles')
+      .update({ avatar_url: null, avatar_storage_path: null })
+      .eq('id', currentSession.user.id);
+    if (error) throw error;
+    if (previousPath) await supabase.storage.from('professional-media').remove([previousPath]);
+    currentAccountProfile = { ...currentAccountProfile, avatar_url: null, avatar_storage_path: null };
+    renderClientPhoto(currentAccountProfile);
+    showClientPhotoMessage('Foto removida.');
+  } catch (error) {
+    showClientPhotoMessage(error.message || 'Não foi possível remover a foto.', 'error');
+  } finally {
+    setClientPhotoLoading(false);
+  }
+}
+
+document.getElementById('client-photo-file').addEventListener('change', event => {
+  const file = event.target.files[0];
+  showClientPhotoMessage('');
+  if (!file) return renderClientPhoto(currentAccountProfile);
+  try {
+    validatePhoto(file);
+    if (clientPreviewUrl) URL.revokeObjectURL(clientPreviewUrl);
+    clientPreviewUrl = URL.createObjectURL(file);
+    renderClientPhoto(currentAccountProfile, clientPreviewUrl);
+  } catch (error) {
+    event.target.value = '';
+    showClientPhotoMessage(error.message, 'error');
+  }
+});
+document.getElementById('save-client-photo').addEventListener('click', saveClientPhoto);
+document.getElementById('remove-client-photo').addEventListener('click', removeClientPhoto);
 
 async function configureProfessionalSignup() {
   const oldPrice = document.getElementById('price-range');
@@ -90,7 +245,7 @@ function translateError(error) {
   if (/already registered|already exists/i.test(text)) return 'Este e-mail já possui uma conta.';
   if (/password/i.test(text) && /least|short/i.test(text)) return 'A senha precisa ter pelo menos 8 caracteres.';
   if (/rate limit/i.test(text)) return 'Muitas tentativas seguidas. Aguarde alguns minutos e tente novamente.';
-  if (/email not confirmed/i.test(text)) return 'Confirme seu e-mail antes de entrar.';
+  if (/email not confirmed/i.test(text)) return 'O acesso imediato ainda não foi ativado nas configurações do sistema.';
   return text;
 }
 
@@ -174,7 +329,7 @@ async function showAccount(session) {
 
   const { data: profile, error } = await supabase
     .from('profiles')
-    .select('full_name, role, city, state')
+    .select('full_name, role, city, state, avatar_url, avatar_storage_path')
     .eq('id', session.user.id)
     .single();
 
@@ -184,6 +339,7 @@ async function showAccount(session) {
   }
 
   document.getElementById('account-name').textContent = profile.full_name || session.user.email;
+  currentAccountProfile = profile;
   document.getElementById('account-role').textContent = profile.role === 'professional' ? 'Profissional' : 'Cliente';
   document.getElementById('account-copy').textContent = profile.role === 'professional'
     ? `Perfil profissional de ${profile.city || 'sua cidade'}${profile.state ? `/${profile.state}` : ''}.`
@@ -192,6 +348,7 @@ async function showAccount(session) {
   const statusRow = document.getElementById('account-status-row');
   const profileLink = document.getElementById('account-profile-link');
   if (profile.role === 'professional') {
+    clientPhotoEditor.hidden = true;
     const { data: professional } = await supabase
       .from('professional_profiles')
       .select('status')
@@ -204,6 +361,8 @@ async function showAccount(session) {
   } else {
     statusRow.hidden = true;
     profileLink.hidden = true;
+    clientPhotoEditor.hidden = false;
+    renderClientPhoto(profile);
   }
 
   headerButton.textContent = 'Minha conta';
@@ -308,12 +467,14 @@ signupForm.addEventListener('submit', async event => {
   setRole('client');
   unlockRoleChoice();
   setView('login');
-  showMessage('Cadastro recebido! Confira seu e-mail para confirmar a conta e depois faça o login.', 'success');
+  showMessage('Cadastro criado! Entre com seu e-mail e senha.', 'success');
 });
 
 document.getElementById('sign-out').addEventListener('click', async () => {
   await supabase.auth.signOut();
   currentSession = null;
+  currentAccountProfile = null;
+  clientPhotoEditor.hidden = true;
   headerButton.textContent = 'Entrar / cadastrar';
   setView('login');
   showMessage('Você saiu da sua conta.', 'success');
