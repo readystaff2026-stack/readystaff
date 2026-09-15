@@ -7,7 +7,12 @@ const empty = document.getElementById('talent-empty');
 const service = document.getElementById('service');
 const budget = document.getElementById('budget');
 const minimum = document.getElementById('budget-min');
+const city = document.getElementById('city-filter');
+const gate = document.getElementById('access-gate');
 let professionals = [];
+let canBrowse = false;
+let requestVersion = 0;
+const normalize = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 
 const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -80,7 +85,7 @@ function renderProfile(profile) {
 
 function matchingProfessionals() {
   const max = Number(budget.value);
-  return professionals.filter(profile => offerings(profile).some(offer => {
+  return professionals.filter(profile => (!city.value || normalize(`${profile.city} ${profile.state}`).includes(normalize(city.value))) && offerings(profile).some(offer => {
     if (service.value && offer.categories.slug !== service.value) return false;
     if (!budget.value || !Number.isFinite(max)) return true;
     const price = Number(offer.price);
@@ -105,6 +110,7 @@ function updateMinimum() {
 }
 
 function render() {
+  if (!canBrowse) return;
   updateMinimum();
   const selected = matchingProfessionals();
   container.replaceChildren(...selected.map(renderProfile));
@@ -114,22 +120,59 @@ function render() {
 }
 
 async function loadProfessionals() {
-  const { data, error } = await supabase
+  const version = ++requestVersion;
+  canBrowse = false;
+  professionals = [];
+  container.replaceChildren();
+  section.hidden = true;
+  gate.hidden = false;
+  try {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (version !== requestVersion || !session || sessionError) return;
+    const { data: account, error: accountError } = await supabase.from('profiles').select('role').eq('id', session.user.id).maybeSingle();
+    if (version !== requestVersion) return;
+    if (account?.role === 'professional') { location.replace('painel.html'); return; }
+    if (accountError || account?.role !== 'client') return;
+    canBrowse = true;
+    gate.hidden = true;
+    section.hidden = false;
+    count.textContent = 'Carregando profissionais...';
+    const { data, error } = await supabase
     .from('professional_profiles')
     .select('id, display_name, avatar_url, city, state, bio, professional_categories(price, accepts_proposals, categories(id, name, slug))')
     .eq('status', 'approved')
     .order('created_at', { ascending: false });
 
-  if (error) {
+    if (version !== requestVersion) return;
+    if (error) throw error;
+    professionals = data || [];
+    empty.textContent = 'Nenhum profissional corresponde aos filtros. Tente outra categoria, cidade ou orçamento.';
+    render();
+  } catch (_error) {
+    if (version !== requestVersion) return;
     empty.textContent = 'Não foi possível carregar os profissionais agora. Tente novamente em instantes.';
+    empty.hidden = false;
+    count.textContent = '';
     section.hidden = false;
-    return;
   }
-  professionals = data || [];
-  render();
 }
 
 document.addEventListener('readystaff:search', render);
 document.addEventListener('readystaff:filters-changed', render);
 budget.addEventListener('input', render);
+city.addEventListener('input', render);
+supabase.auth.onAuthStateChange(event => {
+  if (event === 'SIGNED_OUT') {
+    requestVersion++;
+    canBrowse = false;
+    professionals = [];
+    container.replaceChildren();
+    section.hidden = true;
+    gate.hidden = false;
+    minimum.textContent = 'Entre para consultar os valores cadastrados.';
+    budget.removeAttribute('min');
+  } else if (event === 'SIGNED_IN') {
+    setTimeout(loadProfessionals, 0);
+  }
+});
 loadProfessionals();

@@ -35,6 +35,12 @@ dashboardLink.className = 'button teal';
 dashboardLink.href = 'painel.html';
 dashboardLink.textContent = 'Abrir meu painel';
 accountView.querySelector('.account-actions').prepend(dashboardLink);
+const findProfessionalsLink = document.createElement('a');
+findProfessionalsLink.className = 'button teal';
+findProfessionalsLink.href = 'encontrar.html';
+findProfessionalsLink.textContent = 'Encontrar profissionais';
+findProfessionalsLink.hidden = true;
+accountView.querySelector('.account-actions').prepend(findProfessionalsLink);
 const recoveryForm = document.createElement('form');
 recoveryForm.className = 'auth-form';
 recoveryForm.hidden = true;
@@ -299,7 +305,7 @@ function setRole(role) {
   const startingPrice = document.getElementById('starting-price');
   if (startingPrice) startingPrice.required = role === 'professional';
   signupForm.querySelector('.auth-submit').textContent = role === 'professional'
-    ? 'Enviar cadastro profissional'
+    ? 'Criar meu perfil profissional'
     : 'Criar cadastro de contratante';
 }
 
@@ -338,7 +344,7 @@ function openEntry() {
 async function showAccount(session) {
   currentSession = session;
   authTitle.textContent = 'Minha conta';
-  authSubtitle.textContent = 'Acompanhe seu cadastro e as novidades da ReadyStaff.';
+  authSubtitle.textContent = 'Gerencie sua conta e acompanhe suas conexões.';
   document.querySelector('.auth-tabs').hidden = true;
   loginForm.hidden = true;
   signupForm.hidden = true;
@@ -360,10 +366,11 @@ async function showAccount(session) {
 
   document.getElementById('account-name').textContent = profile.full_name || session.user.email;
   currentAccountProfile = profile;
+  findProfessionalsLink.hidden = profile.role !== 'client';
   document.getElementById('account-role').textContent = profile.role === 'professional' ? 'Profissional' : 'Cliente';
   document.getElementById('account-copy').textContent = profile.role === 'professional'
     ? `Perfil profissional de ${profile.city || 'sua cidade'}${profile.state ? `/${profile.state}` : ''}.`
-    : 'Sua conta de cliente está pronta para acompanhar a evolução da ReadyStaff.';
+    : 'Encontre profissionais, peça orçamentos e acompanhe as respostas no seu painel.';
 
   const statusRow = document.getElementById('account-status-row');
   const profileLink = document.getElementById('account-profile-link');
@@ -558,7 +565,11 @@ if (pageParams.get('reset') === '1') {
   setView('login');
   showMessage('Sua conta e os dados relacionados foram excluídos definitivamente.', 'success');
   history.replaceState({}, '', location.pathname);
-} else if (!session && !hasSeenEntry()) setTimeout(openEntry, 250);
+} else if (['client', 'professional'].includes(pageParams.get('cadastro'))) {
+  openAuth(pageParams.get('cadastro'));
+} else if (pageParams.get('entrar') === '1' || pageParams.get('conta') === '1') {
+  openAuth();
+}
 
 supabase.auth.onAuthStateChange((event, sessionValue) => {
   currentSession = sessionValue;

@@ -484,6 +484,9 @@ async function start() {
   document.getElementById('quote-button').hidden = session?.user?.id === profileId;
 
   if (session?.user?.id === profileId) {
+    const back = document.querySelector('.back');
+    back.href = 'painel.html';
+    back.textContent = '← Voltar ao meu painel';
     const { data: categoryData, error: categoryError } = await supabase.from('categories').select('id, name, slug').eq('active', true).order('sort_order');
     if (categoryError) return setEditorMessage('Não foi possível carregar as categorias.', 'error');
     categories = categoryData || [];

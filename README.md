@@ -1,12 +1,23 @@
-# ReadyStaff — vitrine inicial
+# ReadyStaff — plataforma de serviços para eventos
 
-Plataforma responsiva, em português, com 21 categorias profissionais ilustradas, busca por categoria e orçamento, entrada guiada, autenticação, perfis públicos e editor de perfil com portfólio.
+Plataforma em português com abertura explicativa, navegação própria para celular, busca por categoria, cidade e orçamento, contas de contratantes e profissionais, perfis, portfólio e pedidos de orçamento.
+
+## Páginas
+- `index.html`: apresentação do serviço e escolha entre contratante e profissional; não carrega o catálogo nem a lista de perfis.
+- `encontrar.html`: categorias sem fotos, filtros e resultados para contratantes conectados.
+- `quem-somos.html`, `como-funciona.html`, `ajuda.html`: conteúdo institucional e orientações.
+- `privacidade.html`, `termos.html`: uso de dados e regras da plataforma.
+- `painel.html`, `perfil.html`: áreas existentes preservadas, com navegação e acabamento visual atualizados.
+- `base.css`: estilos originais extraídos; `platform.css`: visual e adaptação ao celular; `site.js`: menu e links legados.
+
+## Pendência institucional
+O responsável deve fornecer a identificação jurídica do controlador e um canal oficial para solicitações de privacidade. A política descreve a operação observada, mas esses dados não foram inventados. O conteúdo jurídico deve ser validado pelo responsável antes de ser considerado uma política definitiva de conformidade.
 
 ## Baixar
 No GitHub: Code > Download ZIP. Extraia o arquivo e mantenha `index.html`, `app.js`, `auth.js` e a pasta `assets` juntos.
 
 ## Abrir
-Abra index.html no navegador. Não exige instalação ou compilação.
+Sirva a pasta por HTTP, por exemplo com `python -m http.server 8765`. Os módulos de autenticação precisam de um servidor; não use `file://`. Não exige instalação ou compilação para publicar.
 
 ## Cloudflare Pages
 Para envio direto, selecione a pasta extraída que contém index.html e app.js.
@@ -18,18 +29,19 @@ O frontend usa `@supabase/supabase-js` 2.116.0 com a chave pública do projeto. 
 
 ## Escopo e limites
 - O cadastro e o login estão disponíveis para clientes e profissionais.
-- A abertura do site separa o caminho de contratante e profissional, conduzindo cada público ao formulário adequado.
+- A abertura explica o serviço e termina nos dois caminhos de cadastro, sem abrir um modal automaticamente.
 - Perfis profissionais são publicados imediatamente, sem confirmação obrigatória de e-mail e sem fila de aprovação manual.
-- Profissionais aparecem na página inicial e possuem página pública individual.
+- Os resultados ficam em `encontrar.html`; a interface da busca exige uma conta de contratante. A separação visual não altera as regras de acesso do banco: perfis e mídias que já eram públicos continuam sujeitos às políticas existentes.
 - O profissional pode editar foto, apresentação, categorias, localização, disponibilidade, Instagram, valor por categoria, aceite de propostas e até três fotos opcionais no portfólio.
 - O contratante pode adicionar, trocar ou remover uma foto opcional na própria conta.
 - O contratante pode filtrar por profissão e orçamento máximo; o menor valor cadastrado orienta o filtro.
-- Pedidos de orçamento, recuperação de senha, avaliações e painel administrativo serão adicionados nas próximas etapas.
+- Pedidos de orçamento, painéis por tipo de conta, recuperação de senha e exclusão da própria conta estão implementados. Não há avaliações ou painel administrativo nesta versão.
 - Não processa pagamentos.
 - O logotipo oficial e as imagens ilustrativas das categorias ficam na pasta `assets`.
 - Nenhum telefone, e-mail comercial, avaliação ou profissional fictício foi publicado.
 
 ## Verificações manuais antes da publicação
+Verificação local: `node tests/navigation-check.mjs` confere links, âncoras, elementos usados pelo cadastro, filtros e a regressão do envio direto de fotos até 5 MB. Não cria contas nem altera dados.
 1. Abrir index.html em desktop e celular.
 2. Testar as 21 categorias, filtro de palavra e filtro de orçamento (incluindo ausência de resultados).
 3. Testar Limpar filtros.

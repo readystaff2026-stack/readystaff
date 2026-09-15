@@ -35,6 +35,8 @@ categoryButton.type = 'button';
 categoryButton.textContent = 'Buscar profissionais desta categoria';
 modal.append(categoryButton);
 const norm = value => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+const moreCategories = document.getElementById('more-categories');
+let showAllCategories = false;
 
 services.forEach(item => {
   const option = document.createElement('option');
@@ -59,15 +61,11 @@ function openCategory(item) {
 function render() {
   cards.replaceChildren();
   const selected = services.filter(item => (!service.value || item.slug === service.value) && norm(`${item.name} ${item.copy}`).includes(norm(term.value)));
-  selected.forEach(item => {
+  const limited = !showAllCategories && !service.value && !term.value;
+  (limited ? selected.slice(0, 6) : selected).forEach(item => {
     const index = services.indexOf(item);
     const card = document.createElement('article');
     card.className = 'card';
-    const image = document.createElement('div');
-    image.className = 'card-image';
-    image.style.backgroundPosition = imagePosition(index);
-    image.setAttribute('role', 'img');
-    image.setAttribute('aria-label', `Imagem ilustrativa de ${item.name}`);
     const body = document.createElement('div');
     body.className = 'card-body';
     const number = document.createElement('span');
@@ -83,13 +81,17 @@ function render() {
     button.textContent = 'Ver profissionais';
     button.setAttribute('aria-label', `Ver profissionais: ${item.name}`);
     button.addEventListener('click', () => openCategory(item));
-    image.append(number);
     body.append(title, text, button);
-    card.append(image, body);
+    card.append(body);
     cards.append(card);
   });
   document.getElementById('count').textContent = `${selected.length} de ${services.length} categorias`;
   document.getElementById('empty').hidden = selected.length !== 0;
+  if (moreCategories) {
+    moreCategories.hidden = Boolean(service.value || term.value || selected.length <= 6);
+    moreCategories.textContent = showAllCategories ? 'Mostrar menos categorias' : `Ver todas as ${services.length} categorias`;
+    moreCategories.setAttribute('aria-expanded', String(showAllCategories));
+  }
 }
 
 document.getElementById('search').addEventListener('submit', event => {
@@ -97,7 +99,7 @@ document.getElementById('search').addEventListener('submit', event => {
   render();
   document.dispatchEvent(new CustomEvent('readystaff:search'));
   const talents = document.getElementById('talentos');
-  (talents.hidden ? document.getElementById('servicos') : talents).scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  (talents.hidden ? document.getElementById('access-gate') : talents).scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
 });
 service.addEventListener('change', () => {
   render();
@@ -108,6 +110,8 @@ document.getElementById('reset').addEventListener('click', () => {
   service.value = '';
   term.value = '';
   document.getElementById('budget').value = '';
+  document.getElementById('city-filter').value = '';
+  showAllCategories = false;
   render();
   document.dispatchEvent(new CustomEvent('readystaff:filters-changed'));
   term.focus();
@@ -119,8 +123,10 @@ categoryButton.addEventListener('click', () => {
   document.getElementById('search').requestSubmit();
 });
 modal.setAttribute('aria-labelledby', 'detail-title');
-document.querySelector('.entry-card.client li:nth-child(2)').textContent = 'Compare valores e propostas';
-document.querySelector('.launch-note p').textContent = 'Crie sua conta, informe seus serviços e valores e publique seu perfil na ReadyStaff.';
-document.querySelector('#duvidas details:first-of-type p').textContent = 'Sim. Os perfis publicados mostram categoria, valor, experiência, portfólio e contato. A contratação e o pagamento são combinados diretamente entre as partes.';
 modal.querySelector('p:last-of-type').textContent = 'Escolha esta categoria para comparar profissionais, valores e disponibilidade.';
+moreCategories?.addEventListener('click', () => {
+  showAllCategories = !showAllCategories;
+  render();
+  if (!showAllCategories) document.getElementById('servicos').scrollIntoView({ behavior: 'auto' });
+});
 render();

@@ -2,27 +2,37 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Meu painel — ReadyStaff</title>
   <meta name="description" content="Acompanhe seus pedidos de orçamento na ReadyStaff.">
   <link rel="stylesheet" href="dashboard.css">
   <link rel="stylesheet" href="dashboard-extra.css">
+  <meta name="theme-color" content="#073760"><meta name="robots" content="noindex,follow"><link rel="icon" href="assets/logo-readystaff.png">
+  <link rel="stylesheet" href="platform.css?v=20260915-4">
 </head>
-<body>
-  <header><div class="wrap nav"><a id="brand-link" href="index.html"><img src="assets/logo-readystaff.png" alt="ReadyStaff"></a><a id="header-link" href="index.html">← Voltar ao site</a></div></header>
+<body class="rs-account">
+  <header class="rs-account-header"><div class="wrap nav"><a id="brand-link" href="index.html"><img src="assets/logo-readystaff.png" alt="ReadyStaff"></a><div class="account-links"><a href="ajuda.html">Ajuda</a><a id="header-link" href="index.html">← Voltar ao site</a></div></div></header>
   <main class="wrap">
-    <section class="dashboard-head"><div><p id="area-label" class="eyebrow">Área privada</p><h1 id="dashboard-title">Meu painel</h1><p id="dashboard-copy">Carregando seus pedidos...</p></div><div class="head-actions"><a id="browse-professionals" class="button" href="index.html#talentos" hidden>Encontrar profissionais</a><a id="edit-profile" class="button secondary" href="perfil.html?me=1" hidden>Editar meu perfil</a><button id="sign-out" class="button secondary" type="button">Sair</button></div></section>
+    <section class="dashboard-head"><div><p id="area-label" class="eyebrow">Área privada</p><h1 id="dashboard-title">Meu painel</h1><p id="dashboard-copy">Carregando seus pedidos...</p></div><div class="head-actions"><a id="browse-professionals" class="button" href="encontrar.html" hidden>Encontrar profissionais</a><a id="edit-profile" class="button secondary" href="perfil.html?me=1" hidden>Editar meu perfil</a><button id="sign-out" class="button secondary" type="button">Sair</button></div></section>
     <section id="professional-overview" class="overview" hidden>
       <article><span>Perfil profissional</span><strong id="profile-state">Carregando</strong><a href="perfil.html?me=1">Ver e editar perfil</a></article>
       <article><span>Pedidos pendentes</span><strong id="pending-count">0</strong><small>Responda rapidamente aos clientes.</small></article>
       <article><span>Oportunidades recebidas</span><strong id="total-count">0</strong><small>Histórico total de orçamentos.</small></article>
     </section>
+    <aside class="account-help"><span>Use os filtros para acompanhar suas conversas e o andamento dos pedidos.</span><a href="ajuda.html#orcamentos">Como usar os orçamentos ↗</a></aside>
     <nav class="filters" aria-label="Filtrar pedidos"><button class="active" data-filter="all">Todos</button><button data-filter="pending">Pendentes</button><button data-filter="accepted">Aceitos</button><button data-filter="declined">Recusados</button><button data-filter="cancelled">Cancelados</button></nav>
     <div id="dashboard-message" class="message" aria-live="polite">Carregando...</div>
     <section id="requests" class="request-grid" aria-live="polite"></section>
     <section class="danger-zone"><div><h2>Excluir minha conta</h2><p>Remove definitivamente seu cadastro, fotos, perfil e dados relacionados.</p></div><button id="open-delete-account" class="button danger" type="button">Excluir conta</button></section>
   </main>
   <dialog id="delete-dialog"><form id="delete-form" class="delete-shell"><button id="close-delete" class="dialog-close" type="button">Fechar</button><p class="eyebrow">Ação permanente</p><h2>Excluir sua conta?</h2><p>Esta ação não pode ser desfeita. Seu cadastro, fotos, perfil e pedidos relacionados serão removidos.</p><label>Digite <strong>EXCLUIR</strong> para confirmar<input name="confirmation" autocomplete="off" required></label><div id="delete-message" class="delete-message" hidden></div><button class="button danger" type="submit">Excluir minha conta definitivamente</button></form></dialog>
-  <script type="module" src="dashboard.js?v=20260915-3"></script>
+<footer class="rs-footer"><div class="wrap">
+<div class="footer-grid"><div class="footer-brand"><a class="logo" href="index.html"><img src="assets/logo-readystaff.png" alt="ReadyStaff" width="176" height="48"></a><p>Gente boa faz grandes eventos.<br>A gente faz a conexão.</p><span class="footer-tag">Profissionais de eventos, em um só lugar.</span></div>
+<nav aria-label="Explore a ReadyStaff"><h2>A plataforma</h2><a href="quem-somos.html">Quem somos</a><a href="como-funciona.html">Como funciona</a><a href="encontrar.html">Encontrar profissionais</a></nav>
+<nav aria-label="Sua conta"><h2>Comece por aqui</h2><a href="index.html?cadastro=client">Quero contratar</a><a href="index.html?cadastro=professional">Sou profissional</a><a href="painel.html">Meu painel</a><a href="ajuda.html">Central de ajuda</a></nav>
+<nav aria-label="Privacidade e termos"><h2>Transparência</h2><a href="privacidade.html">Privacidade e proteção de dados</a><a href="termos.html">Termos de uso</a><a href="privacidade.html#cookies">Cookies e armazenamento</a><a href="ajuda.html#excluir-conta">Excluir minha conta</a></nav></div>
+<div class="footer-bottom"><span>© 2026 ReadyStaff. Todos os direitos reservados.</span><span>A negociação e o pagamento são combinados entre as partes.</span></div></div></footer>
+<nav class="mobile-dock" aria-label="Atalhos no celular"><a href="index.html"><span aria-hidden="true">⌂</span>Início</a><a href="como-funciona.html"><span aria-hidden="true">◎</span>Como usar</a><a href="ajuda.html"><span aria-hidden="true">?</span>Ajuda</a><a href="index.html?entrar=1"><span aria-hidden="true">↗</span>Minha conta</a></nav>
+  <script type="module" src="dashboard.js?v=20260915-4"></script>
 </body>
 </html>
