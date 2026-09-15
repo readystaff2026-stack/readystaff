@@ -30,6 +30,50 @@ roleNote.append(roleNoteText, document.createTextNode(' · '), roleSwitch);
 signupForm.prepend(roleNote);
 let currentSession = null;
 
+async function configureProfessionalSignup() {
+  const oldPrice = document.getElementById('price-range');
+  const priceField = oldPrice.closest('.field');
+  const priceLabel = document.createElement('label');
+  priceLabel.htmlFor = 'starting-price';
+  priceLabel.textContent = 'Valor inicial do serviço';
+  const priceInput = document.createElement('input');
+  priceInput.id = 'starting-price';
+  priceInput.name = 'starting_price';
+  priceInput.type = 'number';
+  priceInput.min = '1';
+  priceInput.step = '0.01';
+  priceInput.inputMode = 'decimal';
+  priceInput.placeholder = 'Ex.: 180,00';
+  const priceHelp = document.createElement('small');
+  priceHelp.textContent = 'Depois você poderá definir um valor diferente para cada categoria.';
+  priceField.replaceChildren(priceLabel, priceInput, priceHelp);
+
+  const proposal = document.createElement('label');
+  proposal.className = 'terms proposal-choice';
+  const proposalInput = document.createElement('input');
+  proposalInput.type = 'checkbox';
+  proposalInput.name = 'accepts_proposals';
+  const proposalText = document.createElement('span');
+  proposalText.textContent = 'Aceito receber propostas de valores dos contratantes.';
+  proposal.append(proposalInput, proposalText);
+  priceField.after(proposal);
+
+  const target = professionalFields.querySelector('.category-options');
+  target.textContent = 'Carregando categorias...';
+  const { data, error } = await supabase.from('categories').select('name, slug').eq('active', true).order('sort_order');
+  if (error) return showMessage('Não foi possível carregar as categorias agora.', 'error');
+  target.replaceChildren(...data.map(category => {
+    const label = document.createElement('label');
+    label.className = 'category-check';
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.name = 'categories';
+    input.value = category.slug;
+    label.append(input, document.createTextNode(category.name));
+    return label;
+  }));
+}
+
 function showMessage(copy, type = 'info') {
   message.textContent = copy;
   message.className = `auth-message ${type}`;
@@ -79,6 +123,8 @@ function setRole(role) {
   if (input) input.checked = true;
   professionalFields.hidden = role !== 'professional';
   professionalFields.querySelectorAll('textarea').forEach(field => field.required = role === 'professional');
+  const startingPrice = document.getElementById('starting-price');
+  if (startingPrice) startingPrice.required = role === 'professional';
   signupForm.querySelector('.auth-submit').textContent = role === 'professional'
     ? 'Enviar cadastro profissional'
     : 'Criar cadastro de contratante';
@@ -98,7 +144,7 @@ function lockRoleChoice(role) {
   const professional = role === 'professional';
   authTitle.textContent = professional ? 'Cadastro profissional' : 'Cadastro de contratante';
   authSubtitle.textContent = professional
-    ? 'Apresente seu trabalho, selecione suas categorias e envie seu perfil para análise.'
+    ? 'Apresente seu trabalho, escolha suas categorias e publique seu perfil.'
     : 'Crie sua conta para encontrar profissionais e organizar seu evento.';
   roleNoteText.textContent = professional ? 'Você está criando um perfil profissional' : 'Você está criando uma conta de contratante';
 }
@@ -144,17 +190,20 @@ async function showAccount(session) {
     : 'Sua conta de cliente está pronta para acompanhar a evolução da ReadyStaff.';
 
   const statusRow = document.getElementById('account-status-row');
+  const profileLink = document.getElementById('account-profile-link');
   if (profile.role === 'professional') {
     const { data: professional } = await supabase
       .from('professional_profiles')
       .select('status')
       .eq('id', session.user.id)
       .maybeSingle();
-    const statusLabels = { pending: 'Em análise', approved: 'Aprovado', rejected: 'Revisão necessária', suspended: 'Suspenso' };
-    document.getElementById('account-status').textContent = statusLabels[professional?.status] || 'Em análise';
+    const statusLabels = { pending: 'Publicado', approved: 'Publicado', rejected: 'Revisão necessária', suspended: 'Suspenso' };
+    document.getElementById('account-status').textContent = statusLabels[professional?.status] || 'Publicado';
     statusRow.hidden = false;
+    profileLink.hidden = false;
   } else {
     statusRow.hidden = true;
+    profileLink.hidden = true;
   }
 
   headerButton.textContent = 'Minha conta';
@@ -236,7 +285,8 @@ signupForm.addEventListener('submit', async event => {
     categories,
     bio: role === 'professional' ? String(form.get('bio') || '').trim() : '',
     experience_years: role === 'professional' ? Number(form.get('experience_years') || 0) : 0,
-    price_range: role === 'professional' ? String(form.get('price_range')) : 'sob_consulta'
+    starting_price: role === 'professional' ? Number(form.get('starting_price') || 0).toFixed(2) : '',
+    accepts_proposals: role === 'professional' && form.get('accepts_proposals') === 'on'
   };
 
   const { data, error } = await supabase.auth.signUp({
@@ -270,6 +320,7 @@ document.getElementById('sign-out').addEventListener('click', async () => {
 });
 
 const { data: { session } } = await supabase.auth.getSession();
+configureProfessionalSignup();
 currentSession = session;
 if (session) headerButton.textContent = 'Minha conta';
 if (!session && !hasSeenEntry()) setTimeout(openEntry, 250);

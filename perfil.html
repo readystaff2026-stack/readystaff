@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Perfil profissional — ReadyStaff</title>
+  <meta name="description" content="Conheça profissionais de eventos na ReadyStaff.">
+  <link rel="stylesheet" href="profile.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap nav">
+      <a class="logo" href="index.html" aria-label="Voltar para a ReadyStaff"><img src="assets/logo-readystaff.png" alt="ReadyStaff"></a>
+      <a class="back" href="index.html#talentos">← Voltar para profissionais</a>
+    </div>
+  </header>
+
+  <main>
+    <div id="profile-message" class="wrap message" aria-live="polite">Carregando perfil profissional...</div>
+
+    <article id="public-profile" hidden>
+      <section class="profile-hero">
+        <div class="wrap hero-grid">
+          <div id="profile-avatar" class="avatar" aria-hidden="true"></div>
+          <div>
+            <span id="profile-status" class="status" hidden></span>
+            <p class="eyebrow">Profissional ReadyStaff</p>
+            <h1 id="profile-name"></h1>
+            <p id="profile-location" class="location"></p>
+            <div id="profile-tags" class="tags"></div>
+          </div>
+          <aside class="contact-card">
+            <span>Vamos conversar?</span>
+            <h2>Consulte disponibilidade e valores.</h2>
+            <a id="whatsapp-link" class="button" target="_blank" rel="noopener noreferrer">Falar pelo WhatsApp</a>
+            <a id="instagram-link" class="social" target="_blank" rel="noopener noreferrer" hidden>Ver Instagram</a>
+          </aside>
+        </div>
+      </section>
+
+      <section class="wrap content-grid">
+        <div class="main-column">
+          <section class="panel">
+            <p class="eyebrow">Apresentação</p>
+            <h2>Sobre este profissional</h2>
+            <p id="profile-bio" class="bio"></p>
+          </section>
+          <section class="panel">
+            <p class="eyebrow">Serviços</p>
+            <h2>Categorias e valores</h2>
+            <div id="profile-services" class="offer-grid"></div>
+          </section>
+          <section id="portfolio-section" class="panel" hidden>
+            <p class="eyebrow">Trabalhos realizados</p>
+            <h2>Portfólio</h2>
+            <div id="portfolio-grid" class="portfolio-grid"></div>
+          </section>
+        </div>
+        <aside class="facts panel">
+          <p class="eyebrow">Informações</p>
+          <dl>
+            <div><dt>Experiência</dt><dd id="profile-experience"></dd></div>
+            <div><dt>Menor valor</dt><dd id="profile-price"></dd></div>
+            <div><dt>Disponibilidade</dt><dd id="profile-availability"></dd></div>
+          </dl>
+        </aside>
+      </section>
+    </article>
+
+    <section id="profile-editor" class="editor wrap" hidden>
+      <div class="editor-head">
+        <div><p class="eyebrow">Área profissional</p><h2>Complete seu perfil</h2><p>Quanto mais completo, melhor será sua apresentação aos clientes.</p></div>
+        <button id="preview-profile" class="button secondary" type="button">Visualizar perfil</button>
+      </div>
+      <div id="editor-message" class="form-message" hidden aria-live="polite"></div>
+      <form id="profile-form">
+        <section class="panel form-section">
+          <h3>Foto e informações principais</h3>
+          <div class="form-grid">
+            <label class="field full"><span>Foto de perfil</span><input id="avatar-file" name="avatar" type="file" accept="image/jpeg,image/png,image/webp,image/avif"><small>JPG, PNG, WebP ou AVIF, até 5 MB.</small></label>
+            <label class="field"><span>Nome profissional</span><input name="display_name" required minlength="2" maxlength="100"></label>
+            <label class="field"><span>WhatsApp</span><input name="whatsapp" type="tel" required maxlength="30"></label>
+            <label class="field"><span>Cidade</span><input name="city" required maxlength="100"></label>
+            <label class="field"><span>Estado</span><select name="state" required><option value="">Selecione</option><option>AC</option><option>AL</option><option>AP</option><option>AM</option><option>BA</option><option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option><option>MT</option><option>MS</option><option>MG</option><option>PA</option><option>PB</option><option>PR</option><option>PE</option><option>PI</option><option>RJ</option><option>RN</option><option>RS</option><option>RO</option><option>RR</option><option>SC</option><option>SP</option><option>SE</option><option>TO</option></select></label>
+            <label class="field"><span>Anos de experiência</span><input name="experience_years" type="number" min="0" max="80" required></label>
+            <label class="field full"><span>Instagram</span><input name="instagram" maxlength="100" placeholder="@seuperfil ou link completo"></label>
+            <label class="field full"><span>Apresentação profissional</span><textarea name="bio" required maxlength="1000" rows="5"></textarea></label>
+            <label class="field full"><span>Disponibilidade e região de atendimento</span><textarea name="availability" maxlength="500" rows="3" placeholder="Ex.: finais de semana, São Paulo e região metropolitana."></textarea></label>
+          </div>
+        </section>
+
+        <section class="panel form-section">
+          <h3>Categorias de atuação</h3>
+          <p>Marque suas profissões, informe o valor de cada serviço e diga se aceita propostas.</p>
+          <div id="editor-categories" class="category-grid"></div>
+        </section>
+
+        <section class="panel form-section">
+          <h3>Fotos do portfólio</h3>
+          <p>Adicione até 8 imagens de eventos e trabalhos realizados.</p>
+          <label class="field"><span>Selecionar fotos</span><input id="portfolio-files" type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple><small>Máximo de 5 MB por imagem.</small></label>
+          <div id="editor-portfolio" class="portfolio-grid editable"></div>
+        </section>
+
+        <button id="save-profile" class="button save" type="submit">Salvar meu perfil</button>
+      </form>
+    </section>
+  </main>
+
+  <footer><div class="wrap footer-row"><img src="assets/logo-readystaff.png" alt="ReadyStaff"><span>© 2026 ReadyStaff</span></div></footer>
+  <script type="module" src="profile.js"></script>
+</body>
+</html>
