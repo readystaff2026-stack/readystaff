@@ -45,12 +45,6 @@ services.forEach(item => {
   service.append(option);
 });
 
-function imagePosition(index) {
-  const column = index % 7;
-  const row = Math.floor(index / 7);
-  return `${column * (100 / 6)}% ${row * 50}%`;
-}
-
 function openCategory(item) {
   document.getElementById('detail-title').textContent = item.name;
   document.getElementById('detail-copy').textContent = item.copy;
@@ -62,16 +56,12 @@ function render() {
   cards.replaceChildren();
   const selected = services.filter(item => (!service.value || item.slug === service.value) && norm(`${item.name} ${item.copy}`).includes(norm(term.value)));
   const limited = !showAllCategories && !service.value && !term.value;
-  (limited ? selected.slice(0, 6) : selected).forEach(item => {
-    const index = services.indexOf(item);
+  const visible = limited ? selected.slice(0, 6) : selected;
+  visible.forEach(item => {
     const card = document.createElement('article');
     card.className = 'card';
     const body = document.createElement('div');
     body.className = 'card-body';
-    const number = document.createElement('span');
-    number.className = 'number';
-    number.textContent = String(index + 1).padStart(2, '0');
-    number.setAttribute('aria-hidden', 'true');
     const title = document.createElement('h3');
     title.textContent = item.name;
     const text = document.createElement('p');
@@ -85,7 +75,7 @@ function render() {
     card.append(body);
     cards.append(card);
   });
-  document.getElementById('count').textContent = `${selected.length} de ${services.length} categorias`;
+  document.getElementById('count').textContent = `${visible.length} de ${services.length} categorias`;
   document.getElementById('empty').hidden = selected.length !== 0;
   if (moreCategories) {
     moreCategories.hidden = Boolean(service.value || term.value || selected.length <= 6);

@@ -395,7 +395,7 @@ function setQuoteMessage(copy, type = '') {
 async function openQuoteDialog() {
   if (!session) {
     alert('Entre como contratante para solicitar um orçamento.');
-    location.href = 'index.html';
+    location.href = 'index.html?entrar=1';
     return;
   }
   if (viewerProfile?.role !== 'client') return alert('Apenas contas de contratante podem enviar pedidos de orçamento.');
@@ -456,6 +456,10 @@ async function start() {
     viewerProfile = viewer;
   }
   const ownProfile = params.get('me') === '1';
+  if (ownProfile && !session) {
+    location.replace('index.html?entrar=1');
+    return;
+  }
   profileId = ownProfile ? session?.user?.id : params.get('id');
   if (viewerProfile?.role === 'professional' && profileId !== session.user.id) {
     location.replace('painel.html');
