@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="dashboard.css">
   <link rel="stylesheet" href="dashboard-extra.css">
   <meta name="theme-color" content="#073760"><meta name="robots" content="noindex,follow"><link rel="icon" href="assets/logo-readystaff.png">
-  <link rel="stylesheet" href="platform.css?v=20260915-4">
+  <link rel="stylesheet" href="platform.css?v=20260915-5">
 </head>
 <body class="rs-account">
   <header class="rs-account-header"><div class="wrap nav"><a id="brand-link" href="index.html"><img src="assets/logo-readystaff.png" alt="ReadyStaff"></a><div class="account-links"><a href="ajuda.html">Ajuda</a><a id="header-link" href="index.html">← Voltar ao site</a></div></div></header>
@@ -18,6 +18,14 @@
       <article><span>Perfil profissional</span><strong id="profile-state">Carregando</strong><a href="perfil.html?me=1">Ver e editar perfil</a></article>
       <article><span>Pedidos pendentes</span><strong id="pending-count">0</strong><small>Responda rapidamente aos clientes.</small></article>
       <article><span>Oportunidades recebidas</span><strong id="total-count">0</strong><small>Histórico total de orçamentos.</small></article>
+    </section>
+    <section class="notification-settings" aria-labelledby="notification-title">
+      <div class="notification-copy"><p class="eyebrow">Avisos de orçamento</p><h2 id="notification-title">Não perca nenhuma atualização</h2><p>Escolha como quer receber avisos de novos pedidos, respostas, aceitações e cancelamentos.</p></div>
+      <form id="notification-form" class="notification-form">
+        <label><input type="checkbox" name="email_enabled" checked><span><strong>Avisos por e-mail</strong><small>Usaremos o e-mail da sua conta quando o WhatsApp não estiver disponível.</small></span></label>
+        <label><input type="checkbox" name="whatsapp_enabled"><span><strong>Avisos pelo WhatsApp</strong><small>Autorizo a ReadyStaff a enviar avisos sobre meus orçamentos para o número do cadastro. Posso desativar quando quiser.</small></span></label>
+        <div class="notification-actions"><button class="button secondary" type="submit">Salvar preferências</button><span id="notification-message" role="status" aria-live="polite"></span></div>
+      </form>
     </section>
     <aside class="account-help"><span>Use os filtros para acompanhar suas conversas e o andamento dos pedidos.</span><a href="ajuda.html#orcamentos">Como usar os orçamentos ↗</a></aside>
     <nav class="filters" aria-label="Filtrar pedidos"><button class="active" data-filter="all">Todos</button><button data-filter="pending">Pendentes</button><button data-filter="accepted">Aceitos</button><button data-filter="declined">Recusados</button><button data-filter="cancelled">Cancelados</button></nav>
@@ -33,6 +41,6 @@
 <nav aria-label="Privacidade e termos"><h2>Transparência</h2><a href="privacidade.html">Privacidade e proteção de dados</a><a href="termos.html">Termos de uso</a><a href="privacidade.html#cookies">Cookies e armazenamento</a><a href="ajuda.html#excluir-conta">Excluir minha conta</a></nav></div>
 <div class="footer-bottom"><span>© 2026 ReadyStaff. Todos os direitos reservados.</span><span>A negociação e o pagamento são combinados entre as partes.</span></div></div></footer>
 <nav class="mobile-dock" aria-label="Atalhos no celular"><a href="index.html"><span aria-hidden="true">⌂</span>Início</a><a href="como-funciona.html"><span aria-hidden="true">◎</span>Como usar</a><a href="ajuda.html"><span aria-hidden="true">?</span>Ajuda</a><a href="index.html?entrar=1"><span aria-hidden="true">↗</span>Minha conta</a></nav>
-  <script type="module" src="dashboard.js?v=20260915-4"></script>
+  <script type="module" src="dashboard.js?v=20260915-5"></script>
 </body>
 </html>

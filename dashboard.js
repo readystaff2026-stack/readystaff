@@ -10,6 +10,14 @@ const labels = { pending: 'Pendente', accepted: 'Aceito', declined: 'Recusado', 
 const money = value => value ? Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'Não informado';
 const date = value => new Date(`${value}T12:00:00`).toLocaleDateString('pt-BR');
 
+async function processNotifications(quoteId = '') {
+  try {
+    await supabase.functions.invoke('process-notifications', { body: quoteId ? { quote_id: quoteId } : {} });
+  } catch (_error) {
+    // O evento permanece na fila do banco para uma nova tentativa.
+  }
+}
+
 function detail(label, value) {
   const box = document.createElement('div');
   box.className = 'detail';
@@ -43,6 +51,7 @@ async function updateRequest(id, status, response = null) {
     alert(error.message || 'Não foi possível atualizar o pedido.');
     return;
   }
+  await processNotifications(id);
   await loadRequests();
 }
 
@@ -150,6 +159,36 @@ document.querySelectorAll('[data-filter]').forEach(button => button.addEventList
   document.querySelectorAll('[data-filter]').forEach(item => item.classList.toggle('active', item === button));
   render();
 }));
+const notificationForm = document.getElementById('notification-form');
+const notificationMessage = document.getElementById('notification-message');
+
+async function loadNotificationPreferences() {
+  const { data, error } = await supabase.from('notification_preferences').select('email_enabled, whatsapp_enabled').eq('user_id', currentSession.user.id).maybeSingle();
+  if (error) {
+    notificationMessage.textContent = 'Não foi possível carregar as preferências.';
+    return;
+  }
+  notificationForm.elements.email_enabled.checked = data?.email_enabled !== false;
+  notificationForm.elements.whatsapp_enabled.checked = Boolean(data?.whatsapp_enabled);
+}
+
+notificationForm.addEventListener('submit', async event => {
+  event.preventDefault();
+  const button = notificationForm.querySelector('[type="submit"]');
+  const whatsappEnabled = notificationForm.elements.whatsapp_enabled.checked;
+  button.disabled = true;
+  notificationMessage.textContent = 'Salvando...';
+  const { error } = await supabase.from('notification_preferences').upsert({
+    user_id: currentSession.user.id,
+    email_enabled: notificationForm.elements.email_enabled.checked,
+    whatsapp_enabled: whatsappEnabled,
+    whatsapp_opted_in_at: whatsappEnabled ? new Date().toISOString() : null,
+    updated_at: new Date().toISOString()
+  }, { onConflict: 'user_id' });
+  button.disabled = false;
+  notificationMessage.textContent = error ? 'Não foi possível salvar agora.' : 'Preferências salvas.';
+  if (!error) processNotifications();
+});
 document.getElementById('sign-out').addEventListener('click', async () => { await supabase.auth.signOut(); location.href = 'index.html'; });
 const deleteDialog = document.getElementById('delete-dialog');
 const deleteForm = document.getElementById('delete-form');
@@ -194,6 +233,7 @@ async function start() {
   currentSession = session;
   const { data: profile, error } = await supabase.from('profiles').select('full_name, role').eq('id', session.user.id).single();
   if (error) return;
+  await loadNotificationPreferences();
   role = profile.role;
   const professional = role === 'professional';
   document.getElementById('dashboard-title').textContent = professional ? 'Minha área profissional' : 'Meus orçamentos';
@@ -213,5 +253,6 @@ async function start() {
     document.getElementById('profile-state').textContent = complete ? 'Publicado' : 'Complete agora';
   }
   await loadRequests();
+  processNotifications();
 }
 start();

@@ -425,7 +425,7 @@ document.getElementById('quote-form').addEventListener('submit', async event => 
   button.textContent = 'Enviando...';
   setQuoteMessage('Enviando seu pedido...');
   const optionalNumber = name => data.get(name) ? Number(data.get(name)) : null;
-  const { error } = await supabase.from('quote_requests').insert({
+  const { data: createdRequest, error } = await supabase.from('quote_requests').insert({
     client_id: session.user.id,
     professional_id: profileId,
     category_id: Number(data.get('category_id')),
@@ -439,10 +439,15 @@ document.getElementById('quote-form').addEventListener('submit', async event => 
     guest_count: optionalNumber('guest_count'),
     proposed_budget: optionalNumber('proposed_budget'),
     message: String(data.get('message')).trim()
-  });
+  }).select('id').single();
   button.disabled = false;
   button.textContent = 'Enviar pedido de orçamento';
   if (error) return setQuoteMessage(error.message || 'Não foi possível enviar o pedido.', 'error');
+  try {
+    await supabase.functions.invoke('process-notifications', { body: { quote_id: createdRequest.id } });
+  } catch (_error) {
+    // O pedido já foi salvo e o aviso permanece na fila para nova tentativa.
+  }
   quoteForm.reset();
   setQuoteMessage('Pedido enviado! Acompanhe a resposta no seu painel.', 'success');
   setTimeout(() => location.href = 'painel.html', 1300);

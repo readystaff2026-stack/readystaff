@@ -26,7 +26,8 @@ for (const path of pages) {
 }
 const home = read('index.html');
 const main = home.match(/<main[^>]*>([\s\S]*?)<\/main>/)[1];
-assert.doesNotMatch(main, /<img\b|id="cards"|id="talent-cards"/);
+assert.doesNotMatch(main, /id="cards"|id="talent-cards"|category-image|talent-card/);
+assert.match(main, /assets\/event-team\.webp/);
 assert.doesNotMatch(home, /src="(?:app|professionals)\.js/);
 assert.match(main, /data-role="client"/);
 assert.match(main, /data-role="professional"/);

@@ -4,6 +4,17 @@
 .overview strong { font-size:30px; margin:8px 0; }
 .overview a,.overview small { margin-top:auto; color:#d9ebf3; }
 .danger-zone { display:flex; align-items:center; justify-content:space-between; gap:25px; margin:10px 0 60px; padding:22px; border:1px solid #efc9c5; border-radius:16px; background:#fffafa; }
+.notification-settings { display:grid; grid-template-columns:.8fr 1.2fr; gap:34px; align-items:start; padding:25px; margin:0 0 22px; border:1px solid #cfe1dc; border-radius:18px; background:linear-gradient(135deg,#f7fbfa,#eef8f5); }
+.notification-copy h2 { margin:5px 0 8px; font-size:24px; color:var(--navy); }
+.notification-copy>p:last-child { margin:0; color:var(--muted); font-size:14px; }
+.notification-form { display:grid; gap:10px; }
+.notification-form>label { display:flex; gap:12px; align-items:flex-start; padding:13px 14px; border:1px solid #d7e5e1; border-radius:12px; background:#fff; cursor:pointer; }
+.notification-form input { width:18px; height:18px; margin:2px 0 0; accent-color:#078b7b; flex:0 0 auto; }
+.notification-form strong,.notification-form small { display:block; }
+.notification-form strong { color:var(--navy); font-size:14px; }
+.notification-form small { color:var(--muted); line-height:1.45; margin-top:3px; }
+.notification-actions { display:flex; align-items:center; gap:13px; margin-top:3px; }
+.notification-actions span { font-size:13px; color:#087866; }
 .danger-zone h2 { margin:0; color:var(--danger); font-size:20px; }
 .danger-zone p { margin:4px 0 0; color:var(--muted); }
 .button.danger { background:var(--danger); color:#fff; border:0; }
@@ -17,4 +28,4 @@ dialog::backdrop { background:#052f4fb8; backdrop-filter:blur(4px); }
 .delete-shell .danger { width:100%; }
 .dialog-close { position:absolute; right:20px; top:20px; border:0; border-radius:8px; background:var(--soft); padding:8px 10px; color:var(--navy); font-weight:750; }
 .delete-message { margin:0 0 15px; padding:11px; border-radius:9px; background:#fff0ef; color:var(--danger); }
-@media(max-width:760px) { .overview{grid-template-columns:1fr}.danger-zone{align-items:flex-start;flex-direction:column}.danger-zone .button{width:100%} }
+@media(max-width:760px) { .overview{grid-template-columns:1fr}.notification-settings{grid-template-columns:1fr;padding:20px;gap:18px}.notification-actions{align-items:stretch;flex-direction:column}.notification-actions .button{width:100%}.danger-zone{align-items:flex-start;flex-direction:column}.danger-zone .button{width:100%} }
