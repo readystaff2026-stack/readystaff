@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Meu painel — ReadyStaff</title>
+  <meta name="description" content="Acompanhe seus pedidos de orçamento na ReadyStaff.">
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <header><div class="wrap nav"><a href="index.html"><img src="assets/logo-readystaff.png" alt="ReadyStaff"></a><a href="index.html">← Voltar ao site</a></div></header>
+  <main class="wrap">
+    <section class="dashboard-head"><div><p class="eyebrow">Área privada</p><h1 id="dashboard-title">Meu painel</h1><p id="dashboard-copy">Carregando seus pedidos...</p></div><div class="head-actions"><a id="edit-profile" class="button secondary" href="perfil.html?me=1" hidden>Editar perfil</a><button id="sign-out" class="button secondary" type="button">Sair</button></div></section>
+    <nav class="filters" aria-label="Filtrar pedidos"><button class="active" data-filter="all">Todos</button><button data-filter="pending">Pendentes</button><button data-filter="accepted">Aceitos</button><button data-filter="declined">Recusados</button><button data-filter="cancelled">Cancelados</button></nav>
+    <div id="dashboard-message" class="message" aria-live="polite">Carregando...</div>
+    <section id="requests" class="request-grid" aria-live="polite"></section>
+  </main>
+  <script type="module" src="dashboard.js"></script>
+</body>
+</html>

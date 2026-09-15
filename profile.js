@@ -1,4 +1,5 @@
 import { supabase } from './supabase-client.js';
+import { optimizeImage, validateImageFile } from './image-utils.js';
 
 const params = new URLSearchParams(location.search);
 const message = document.getElementById('profile-message');
@@ -15,6 +16,7 @@ let categories = [];
 let currentCategoryIds = new Set();
 let currentOfferings = new Map();
 let portfolio = [];
+let viewerProfile = null;
 
 function setMessage(copy, type = '') {
   message.textContent = copy;
@@ -221,20 +223,13 @@ function fillEditor() {
   editor.hidden = false;
 }
 
-function validateImage(file) {
-  const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
-  if (!allowed.includes(file.type)) throw new Error('Use imagens JPG, PNG, WebP ou AVIF.');
-  if (file.size > 5 * 1024 * 1024) throw new Error('Cada imagem deve ter no máximo 5 MB.');
-}
-
-function extensionFor(file) {
-  return ({ 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/avif': 'avif' })[file.type];
-}
-
 async function uploadImage(file, prefix) {
-  validateImage(file);
-  const path = `${session.user.id}/${prefix}-${crypto.randomUUID()}.${extensionFor(file)}`;
-  const { error } = await supabase.storage.from('professional-media').upload(path, file, { cacheControl: '3600', upsert: false });
+  validateImageFile(file);
+  const optimized = await optimizeImage(file, prefix === 'avatar'
+    ? { maxWidth: 1000, maxHeight: 1000, quality: 0.82 }
+    : { maxWidth: 1800, maxHeight: 1800, quality: 0.8 });
+  const path = `${session.user.id}/${prefix}-${crypto.randomUUID()}.webp`;
+  const { error } = await supabase.storage.from('professional-media').upload(path, optimized, { cacheControl: '3600', contentType: 'image/webp', upsert: false });
   if (error) throw error;
   const { data } = supabase.storage.from('professional-media').getPublicUrl(path);
   return { path, url: data.publicUrl };
@@ -355,9 +350,76 @@ document.getElementById('preview-profile').addEventListener('click', () => {
   publicProfile.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
 });
 
+function setQuoteMessage(copy, type = '') {
+  const target = document.getElementById('quote-message');
+  target.textContent = copy;
+  target.className = `form-message ${type}`.trim();
+  target.hidden = !copy;
+}
+
+async function openQuoteDialog() {
+  if (!session) {
+    alert('Entre como contratante para solicitar um orçamento.');
+    location.href = 'index.html';
+    return;
+  }
+  if (viewerProfile?.role !== 'client') return alert('Apenas contas de contratante podem enviar pedidos de orçamento.');
+  const quoteForm = document.getElementById('quote-form');
+  quoteForm.elements.city.value = viewerProfile.city || '';
+  quoteForm.elements.state.value = viewerProfile.state || '';
+  const select = document.getElementById('quote-category');
+  select.replaceChildren(...offerItems().map(offer => {
+    const option = document.createElement('option');
+    option.value = offer.category_id;
+    option.textContent = `${offer.categories.name} — ${offerPrice(offer)}`;
+    return option;
+  }));
+  quoteForm.elements.event_date.min = new Date().toISOString().slice(0, 10);
+  setQuoteMessage('');
+  document.getElementById('quote-dialog').showModal();
+}
+
+document.getElementById('quote-button').addEventListener('click', openQuoteDialog);
+document.getElementById('close-quote').addEventListener('click', () => document.getElementById('quote-dialog').close());
+document.getElementById('quote-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  const quoteForm = event.currentTarget;
+  const button = quoteForm.querySelector('[type="submit"]');
+  const data = new FormData(quoteForm);
+  button.disabled = true;
+  button.textContent = 'Enviando...';
+  setQuoteMessage('Enviando seu pedido...');
+  const optionalNumber = name => data.get(name) ? Number(data.get(name)) : null;
+  const { error } = await supabase.from('quote_requests').insert({
+    client_id: session.user.id,
+    professional_id: profileId,
+    category_id: Number(data.get('category_id')),
+    client_name: viewerProfile.full_name,
+    client_phone: viewerProfile.phone,
+    event_date: String(data.get('event_date')),
+    event_time: data.get('event_time') || null,
+    city: String(data.get('city')).trim(),
+    state: String(data.get('state')).toUpperCase(),
+    venue: String(data.get('venue') || '').trim() || null,
+    guest_count: optionalNumber('guest_count'),
+    proposed_budget: optionalNumber('proposed_budget'),
+    message: String(data.get('message')).trim()
+  });
+  button.disabled = false;
+  button.textContent = 'Enviar pedido de orçamento';
+  if (error) return setQuoteMessage(error.message || 'Não foi possível enviar o pedido.', 'error');
+  quoteForm.reset();
+  setQuoteMessage('Pedido enviado! Acompanhe a resposta no seu painel.', 'success');
+  setTimeout(() => location.href = 'painel.html', 1300);
+});
+
 async function start() {
   const { data: { session: activeSession } } = await supabase.auth.getSession();
   session = activeSession;
+  if (session) {
+    const { data: viewer } = await supabase.from('profiles').select('full_name, phone, city, state, role').eq('id', session.user.id).maybeSingle();
+    viewerProfile = viewer;
+  }
   const ownProfile = params.get('me') === '1';
   profileId = ownProfile ? session?.user?.id : params.get('id');
   if (!profileId) {
@@ -380,6 +442,7 @@ async function start() {
   currentCategoryIds = new Set((data.professional_categories || []).map(item => item.category_id));
   currentOfferings = new Map((data.professional_categories || []).map(item => [item.category_id, { category_id: item.category_id, price: item.price, accepts_proposals: item.accepts_proposals }]));
   renderPublicProfile();
+  document.getElementById('quote-button').hidden = session?.user?.id === profileId;
 
   if (session?.user?.id === profileId) {
     const { data: categoryData, error: categoryError } = await supabase.from('categories').select('id, name, slug').eq('active', true).order('sort_order');

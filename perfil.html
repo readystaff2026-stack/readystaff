@@ -32,6 +32,7 @@
           <aside class="contact-card">
             <span>Vamos conversar?</span>
             <h2>Consulte disponibilidade e valores.</h2>
+            <button id="quote-button" class="button quote-button" type="button">Solicitar orçamento</button>
             <a id="whatsapp-link" class="button" target="_blank" rel="noopener noreferrer">Falar pelo WhatsApp</a>
             <a id="instagram-link" class="social" target="_blank" rel="noopener noreferrer" hidden>Ver Instagram</a>
           </aside>
@@ -77,7 +78,7 @@
         <section class="panel form-section">
           <h3>Foto e informações principais</h3>
           <div class="form-grid">
-            <label class="field full"><span>Foto de perfil</span><input id="avatar-file" name="avatar" type="file" accept="image/jpeg,image/png,image/webp,image/avif"><small>JPG, PNG, WebP ou AVIF, até 5 MB.</small></label>
+            <label class="field full"><span>Foto de perfil</span><input id="avatar-file" name="avatar" type="file" accept="image/jpeg,image/png,image/webp,image/avif"><small>JPG, PNG, WebP ou AVIF. Otimizamos automaticamente para carregar rápido.</small></label>
             <label class="field"><span>Nome profissional</span><input name="display_name" required minlength="2" maxlength="100"></label>
             <label class="field"><span>WhatsApp</span><input name="whatsapp" type="tel" required maxlength="30"></label>
             <label class="field"><span>Cidade</span><input name="city" required maxlength="100"></label>
@@ -98,7 +99,7 @@
         <section class="panel form-section">
           <h3>Fotos do portfólio</h3>
           <p>Adicione até 3 fotos opcionais de eventos e trabalhos realizados.</p>
-          <label class="field"><span>Selecionar fotos</span><input id="portfolio-files" type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple><small>Fotos horizontais ou verticais, com no máximo 5 MB por imagem.</small></label>
+          <label class="field"><span>Selecionar fotos</span><input id="portfolio-files" type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple><small>Fotos horizontais ou verticais. Otimizamos automaticamente antes do envio.</small></label>
           <div id="editor-portfolio" class="portfolio-grid editable"></div>
         </section>
 
@@ -106,6 +107,27 @@
       </form>
     </section>
   </main>
+
+  <dialog id="quote-dialog" class="quote-dialog" aria-labelledby="quote-title">
+    <form id="quote-form" class="quote-shell">
+      <button id="close-quote" class="dialog-close" type="button" aria-label="Fechar">Fechar</button>
+      <p class="eyebrow">Pedido de orçamento</p><h2 id="quote-title">Conte os detalhes do evento</h2>
+      <p>O profissional receberá seu pedido no painel e poderá aceitar ou recusar.</p>
+      <div id="quote-message" class="form-message" hidden aria-live="polite"></div>
+      <div class="form-grid">
+        <label class="field full"><span>Serviço desejado</span><select id="quote-category" name="category_id" required></select></label>
+        <label class="field"><span>Data do evento</span><input name="event_date" type="date" required></label>
+        <label class="field"><span>Horário</span><input name="event_time" type="time"></label>
+        <label class="field"><span>Cidade</span><input name="city" required maxlength="100"></label>
+        <label class="field"><span>Estado</span><select name="state" required><option value="">Selecione</option><option>AC</option><option>AL</option><option>AP</option><option>AM</option><option>BA</option><option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option><option>MT</option><option>MS</option><option>MG</option><option>PA</option><option>PB</option><option>PR</option><option>PE</option><option>PI</option><option>RJ</option><option>RN</option><option>RS</option><option>RO</option><option>RR</option><option>SC</option><option>SP</option><option>SE</option><option>TO</option></select></label>
+        <label class="field"><span>Local do evento (opcional)</span><input name="venue" maxlength="160" placeholder="Salão, bairro ou endereço"></label>
+        <label class="field"><span>Número de convidados (opcional)</span><input name="guest_count" type="number" min="1" max="100000"></label>
+        <label class="field full"><span>Valor que pretende pagar (opcional)</span><input name="proposed_budget" type="number" min="1" step="0.01" inputmode="decimal"></label>
+        <label class="field full"><span>Mensagem</span><textarea name="message" required minlength="10" maxlength="1500" rows="5" placeholder="Explique o tipo de evento, duração do serviço e o que você precisa."></textarea></label>
+      </div>
+      <button class="button save" type="submit">Enviar pedido de orçamento</button>
+    </form>
+  </dialog>
 
   <footer><div class="wrap footer-row"><img src="assets/logo-readystaff.png" alt="ReadyStaff"><span>© 2026 ReadyStaff</span></div></footer>
   <script type="module" src="profile.js"></script>

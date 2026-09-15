@@ -1,4 +1,5 @@
 import { supabase } from './supabase-client.js';
+import { optimizeImage, validateImageFile } from './image-utils.js';
 
 const modal = document.getElementById('auth-modal');
 const entryModal = document.getElementById('entry-modal');
@@ -23,11 +24,30 @@ roleSwitch.type = 'button';
 roleSwitch.textContent = 'Trocar tipo de cadastro';
 roleNote.append(roleNoteText, document.createTextNode(' · '), roleSwitch);
 signupForm.prepend(roleNote);
+const forgotPassword = document.createElement('button');
+forgotPassword.id = 'forgot-password';
+forgotPassword.className = 'entry-link';
+forgotPassword.type = 'button';
+forgotPassword.textContent = 'Esqueci minha senha';
+loginForm.append(forgotPassword);
+const dashboardLink = document.createElement('a');
+dashboardLink.className = 'button teal';
+dashboardLink.href = 'painel.html';
+dashboardLink.textContent = 'Abrir meu painel';
+accountView.querySelector('.account-actions').prepend(dashboardLink);
+const recoveryForm = document.createElement('form');
+recoveryForm.className = 'auth-form';
+recoveryForm.hidden = true;
+recoveryForm.innerHTML = `<div class="field"><label for="recovery-email">E-mail da conta</label><input id="recovery-email" name="email" type="email" autocomplete="email" required placeholder="voce@email.com"></div><button class="button teal auth-submit" type="submit">Enviar link de recuperação</button><button class="entry-link" data-back-login type="button">Voltar para entrar</button>`;
+signupForm.after(recoveryForm);
+const resetForm = document.createElement('form');
+resetForm.className = 'auth-form';
+resetForm.hidden = true;
+resetForm.innerHTML = `<div class="field"><label for="new-password">Nova senha</label><input id="new-password" name="password" type="password" autocomplete="new-password" minlength="8" required></div><div class="field"><label for="confirm-password">Confirme a nova senha</label><input id="confirm-password" name="confirmation" type="password" autocomplete="new-password" minlength="8" required></div><button class="button teal auth-submit" type="submit">Salvar nova senha</button>`;
+recoveryForm.after(resetForm);
 let currentSession = null;
 let currentAccountProfile = null;
 let clientPreviewUrl = '';
-const allowedPhotoTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
-const maxPhotoSize = 5 * 1024 * 1024;
 
 const clientPhotoEditor = document.createElement('section');
 clientPhotoEditor.id = 'client-photo-editor';
@@ -41,7 +61,7 @@ clientPhotoEditor.innerHTML = `
     <label class="client-photo-input">
       <span>Escolher uma foto</span>
       <input id="client-photo-file" type="file" accept="image/jpeg,image/png,image/webp,image/avif">
-      <small>JPG, PNG, WebP ou AVIF, até 5 MB.</small>
+      <small>JPG, PNG, WebP ou AVIF. A foto será otimizada automaticamente.</small>
     </label>
   </div>
   <div class="client-photo-actions">
@@ -62,15 +82,6 @@ function safeImageUrl(value) {
 
 function initials(name = 'RS') {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join('').toUpperCase() || 'RS';
-}
-
-function validatePhoto(file) {
-  if (!allowedPhotoTypes.includes(file.type)) throw new Error('Use uma imagem JPG, PNG, WebP ou AVIF.');
-  if (file.size > maxPhotoSize) throw new Error('A imagem deve ter no máximo 5 MB.');
-}
-
-function photoExtension(file) {
-  return ({ 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/avif': 'avif' })[file.type];
 }
 
 function showClientPhotoMessage(copy, type = '') {
@@ -108,11 +119,12 @@ async function saveClientPhoto() {
   const file = input.files[0];
   if (!file) return showClientPhotoMessage('Escolha uma foto antes de salvar.', 'error');
   try {
-    validatePhoto(file);
+    validateImageFile(file);
     setClientPhotoLoading(true);
-    showClientPhotoMessage('Enviando sua foto...');
-    const path = `${currentSession.user.id}/client-avatar-${crypto.randomUUID()}.${photoExtension(file)}`;
-    const { error: uploadError } = await supabase.storage.from('professional-media').upload(path, file, { cacheControl: '3600', upsert: false });
+    showClientPhotoMessage('Otimizando e enviando sua foto...');
+    const optimized = await optimizeImage(file, { maxWidth: 900, maxHeight: 900, quality: 0.82 });
+    const path = `${currentSession.user.id}/client-avatar-${crypto.randomUUID()}.webp`;
+    const { error: uploadError } = await supabase.storage.from('professional-media').upload(path, optimized, { cacheControl: '3600', contentType: 'image/webp', upsert: false });
     if (uploadError) throw uploadError;
     const { data: publicUrl } = supabase.storage.from('professional-media').getPublicUrl(path);
     const previousPath = currentAccountProfile.avatar_storage_path;
@@ -167,7 +179,7 @@ document.getElementById('client-photo-file').addEventListener('change', event =>
   showClientPhotoMessage('');
   if (!file) return renderClientPhoto(currentAccountProfile);
   try {
-    validatePhoto(file);
+    validateImageFile(file);
     if (clientPreviewUrl) URL.revokeObjectURL(clientPreviewUrl);
     clientPreviewUrl = URL.createObjectURL(file);
     renderClientPhoto(currentAccountProfile, clientPreviewUrl);
@@ -256,6 +268,8 @@ function setView(view) {
   document.querySelector('.auth-tabs').hidden = false;
   loginForm.hidden = view !== 'login';
   signupForm.hidden = view !== 'signup';
+  recoveryForm.hidden = view !== 'recovery';
+  resetForm.hidden = view !== 'reset';
   tabs.forEach(tab => {
     const active = tab.dataset.authTab === view;
     tab.classList.toggle('active', active);
@@ -264,6 +278,16 @@ function setView(view) {
   if (view === 'login') {
     authTitle.textContent = 'Entre na sua conta';
     authSubtitle.textContent = 'Acesse seu cadastro de contratante ou profissional.';
+  }
+  if (view === 'recovery') {
+    document.querySelector('.auth-tabs').hidden = true;
+    authTitle.textContent = 'Recuperar sua senha';
+    authSubtitle.textContent = 'Enviaremos um link seguro para o e-mail da sua conta.';
+  }
+  if (view === 'reset') {
+    document.querySelector('.auth-tabs').hidden = true;
+    authTitle.textContent = 'Crie uma nova senha';
+    authSubtitle.textContent = 'Use pelo menos 8 caracteres para proteger sua conta.';
   }
 }
 
@@ -318,6 +342,8 @@ async function showAccount(session) {
   document.querySelector('.auth-tabs').hidden = true;
   loginForm.hidden = true;
   signupForm.hidden = true;
+  recoveryForm.hidden = true;
+  resetForm.hidden = true;
   accountView.hidden = false;
   clearMessage();
 
@@ -415,6 +441,38 @@ loginForm.addEventListener('submit', async event => {
   await showAccount(data.session);
 });
 
+forgotPassword.addEventListener('click', () => {
+  document.getElementById('recovery-email').value = document.getElementById('login-email').value;
+  setView('recovery');
+});
+recoveryForm.querySelector('[data-back-login]').addEventListener('click', () => setView('login'));
+recoveryForm.addEventListener('submit', async event => {
+  event.preventDefault();
+  clearMessage();
+  setLoading(recoveryForm, true);
+  const email = String(new FormData(recoveryForm).get('email')).trim();
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${location.origin}/?reset=1` });
+  setLoading(recoveryForm, false);
+  if (error) return showMessage(translateError(error), 'error');
+  showMessage('Se esse e-mail estiver cadastrado, você receberá o link para criar uma nova senha.', 'success');
+});
+resetForm.addEventListener('submit', async event => {
+  event.preventDefault();
+  clearMessage();
+  const data = new FormData(resetForm);
+  const password = String(data.get('password'));
+  if (password !== String(data.get('confirmation'))) return showMessage('As duas senhas precisam ser iguais.', 'error');
+  setLoading(resetForm, true);
+  const { error } = await supabase.auth.updateUser({ password });
+  setLoading(resetForm, false);
+  if (error) return showMessage(translateError(error), 'error');
+  history.replaceState({}, '', location.pathname);
+  resetForm.reset();
+  showMessage('Senha alterada com sucesso! Sua conta já está conectada.', 'success');
+  const { data: { session: updatedSession } } = await supabase.auth.getSession();
+  if (updatedSession) setTimeout(() => showAccount(updatedSession), 900);
+});
+
 signupForm.addEventListener('submit', async event => {
   event.preventDefault();
   clearMessage();
@@ -478,10 +536,18 @@ const { data: { session } } = await supabase.auth.getSession();
 configureProfessionalSignup();
 currentSession = session;
 if (session) headerButton.textContent = 'Minha conta';
-if (!session && !hasSeenEntry()) setTimeout(openEntry, 250);
+if (new URLSearchParams(location.search).get('reset') === '1') {
+  if (!modal.open) modal.showModal();
+  setView('reset');
+} else if (!session && !hasSeenEntry()) setTimeout(openEntry, 250);
 
-supabase.auth.onAuthStateChange((_event, sessionValue) => {
+supabase.auth.onAuthStateChange((event, sessionValue) => {
   currentSession = sessionValue;
   headerButton.textContent = sessionValue ? 'Minha conta' : 'Entrar / cadastrar';
-  if (sessionValue && modal.open) setTimeout(() => showAccount(sessionValue), 0);
+  if (event === 'PASSWORD_RECOVERY') {
+    if (!modal.open) modal.showModal();
+    setView('reset');
+  } else if (sessionValue && modal.open && !new URLSearchParams(location.search).has('reset')) {
+    setTimeout(() => showAccount(sessionValue), 0);
+  }
 });
