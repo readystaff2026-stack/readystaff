@@ -28,6 +28,10 @@ function setEditorMessage(copy, type = '') {
   editorMessage.textContent = copy;
   editorMessage.className = `form-message ${type}`.trim();
   editorMessage.hidden = !copy;
+  const saveFeedback = document.getElementById('save-feedback');
+  saveFeedback.textContent = copy;
+  saveFeedback.className = `form-message save-feedback ${type}`.trim();
+  saveFeedback.hidden = !copy;
 }
 
 function safeUrl(value) {
@@ -150,7 +154,7 @@ function renderPublicProfile() {
   const whatsapp = whatsappUrl(profile.whatsapp);
   const whatsappLink = document.getElementById('whatsapp-link');
   whatsappLink.href = whatsapp || '#';
-  whatsappLink.hidden = !whatsapp;
+  whatsappLink.hidden = !whatsapp || viewerProfile?.role !== 'client';
   const instagram = instagramUrl(profile.instagram);
   const instagramLink = document.getElementById('instagram-link');
   instagramLink.href = instagram || '#';
@@ -343,6 +347,37 @@ form.addEventListener('submit', async event => {
   } finally {
     button.disabled = false;
     button.textContent = 'Salvar meu perfil';
+  }
+});
+
+form.addEventListener('invalid', event => {
+  const fieldName = event.target.closest('.field')?.querySelector('span')?.textContent || 'campo obrigatório';
+  setEditorMessage(`Confira o campo “${fieldName}” antes de salvar.`, 'error');
+  event.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}, true);
+
+document.getElementById('avatar-file').addEventListener('change', event => {
+  const file = event.target.files[0];
+  if (!file) return;
+  try {
+    validateImageFile(file);
+    setEditorMessage('Foto de perfil selecionada. Clique em “Salvar meu perfil” para enviar.');
+  } catch (error) {
+    event.target.value = '';
+    setEditorMessage(error.message, 'error');
+  }
+});
+
+document.getElementById('portfolio-files').addEventListener('change', event => {
+  const files = [...event.target.files];
+  try {
+    files.forEach(validateImageFile);
+    const available = 3 - portfolio.length;
+    if (files.length > available) throw new Error(`Você pode adicionar somente mais ${available} ${available === 1 ? 'foto' : 'fotos'}.`);
+    if (files.length) setEditorMessage(`${files.length} ${files.length === 1 ? 'foto selecionada' : 'fotos selecionadas'}. Clique em “Salvar meu perfil” para enviar.`);
+  } catch (error) {
+    event.target.value = '';
+    setEditorMessage(error.message, 'error');
   }
 });
 
