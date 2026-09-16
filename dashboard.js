@@ -6,9 +6,24 @@ let role = '';
 let requests = [];
 let activeFilter = 'all';
 let currentSession = null;
+let reviews = [];
 const labels = { pending: 'Pendente', accepted: 'Aceito', declined: 'Recusado', cancelled: 'Cancelado' };
 const money = value => value ? Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'Não informado';
 const date = value => new Date(`${value}T12:00:00`).toLocaleDateString('pt-BR');
+
+function ratingCopy(summary) {
+  return summary.count
+    ? `★ ${summary.average.toFixed(1).replace('.', ',')} · ${summary.count} ${summary.count === 1 ? 'avaliação' : 'avaliações'}`
+    : 'Ainda sem avaliações';
+}
+
+function renderStars(value) {
+  const stars = document.createElement('span');
+  stars.className = 'stars-readonly';
+  stars.textContent = `${'★'.repeat(Number(value) || 0)}${'☆'.repeat(5 - (Number(value) || 0))}`;
+  stars.setAttribute('aria-label', `${value} de 5 estrelas`);
+  return stars;
+}
 
 async function processNotifications(quoteId = '') {
   try {
@@ -55,6 +70,112 @@ async function updateRequest(id, status, response = null) {
   await loadRequests();
 }
 
+async function submitReview(event, request, reviewedId) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const feedback = form.querySelector('.review-feedback');
+  const button = form.querySelector('[type="submit"]');
+  const data = new FormData(form);
+  const rating = Number(data.get('rating'));
+  const comment = String(data.get('comment') || '').trim();
+  if (!rating) {
+    feedback.textContent = 'Escolha de 1 a 5 estrelas.';
+    return;
+  }
+  if (comment && comment.length < 3) {
+    feedback.textContent = 'O comentário precisa ter pelo menos 3 caracteres.';
+    return;
+  }
+  button.disabled = true;
+  feedback.textContent = 'Publicando sua avaliação...';
+  const { error } = await supabase.from('reviews').insert({
+    quote_id: request.id,
+    reviewer_id: currentSession.user.id,
+    reviewed_id: reviewedId,
+    rating,
+    comment: comment || null
+  });
+  if (error) {
+    button.disabled = false;
+    feedback.textContent = error.code === '23505'
+      ? 'Você já avaliou este serviço.'
+      : 'Não foi possível publicar. Confirme se o pedido foi aceito.';
+    return;
+  }
+  feedback.textContent = 'Avaliação publicada. Obrigado!';
+  await loadRequests();
+}
+
+function reviewBlock(request) {
+  const block = document.createElement('section');
+  block.className = 'review-block';
+  const heading = document.createElement('div');
+  heading.className = 'review-heading';
+  const title = document.createElement('strong');
+  const targetName = role === 'professional'
+    ? request.client_name
+    : request.professional_profiles?.display_name || 'este profissional';
+  title.textContent = `Avalie ${targetName}`;
+  const note = document.createElement('span');
+  note.textContent = 'Sua experiência ajuda a construir uma comunidade mais confiável.';
+  heading.append(title, note);
+  block.append(heading);
+
+  if (request.myReview) {
+    const published = document.createElement('div');
+    published.className = 'review-published';
+    published.append(renderStars(request.myReview.rating));
+    const copy = document.createElement('span');
+    copy.textContent = request.myReview.comment || 'Avaliação enviada sem comentário.';
+    published.append(copy);
+    block.append(published);
+    return block;
+  }
+
+  const form = document.createElement('form');
+  form.className = 'review-form';
+  const fieldset = document.createElement('fieldset');
+  const legend = document.createElement('legend');
+  legend.textContent = 'Sua nota';
+  const options = document.createElement('div');
+  options.className = 'star-options';
+  for (let value = 5; value >= 1; value -= 1) {
+    const input = document.createElement('input');
+    input.type = 'radio';
+    input.name = 'rating';
+    input.value = String(value);
+    input.id = `rating-${request.id}-${value}`;
+    input.required = true;
+    input.setAttribute('aria-label', `${value} ${value === 1 ? 'estrela' : 'estrelas'}`);
+    const label = document.createElement('label');
+    label.htmlFor = input.id;
+    label.textContent = '★';
+    label.title = `${value} ${value === 1 ? 'estrela' : 'estrelas'}`;
+    options.append(input, label);
+  }
+  fieldset.append(legend, options);
+  const comment = document.createElement('textarea');
+  comment.name = 'comment';
+  comment.maxLength = 600;
+  comment.rows = 3;
+  comment.placeholder = 'Conte como foi a experiência (opcional)';
+  comment.setAttribute('aria-label', 'Comentário sobre a experiência (opcional)');
+  const actions = document.createElement('div');
+  actions.className = 'review-actions';
+  const button = document.createElement('button');
+  button.className = 'button secondary';
+  button.type = 'submit';
+  button.textContent = 'Publicar avaliação';
+  const feedback = document.createElement('span');
+  feedback.className = 'review-feedback';
+  feedback.setAttribute('role', 'status');
+  actions.append(button, feedback);
+  form.append(fieldset, comment, actions);
+  form.addEventListener('submit', event => submitReview(event, request, role === 'professional' ? request.client_id : request.professional_id));
+  block.append(form);
+  return block;
+}
+
 function renderCard(request) {
   const card = document.createElement('article');
   card.className = 'request-card';
@@ -67,7 +188,10 @@ function renderCard(request) {
   eyebrow.textContent = request.categories?.name || 'Serviço para evento';
   const title = document.createElement('h2');
   title.textContent = role === 'professional' ? request.client_name : request.professional_profiles?.display_name || 'Profissional';
-  heading.append(eyebrow, title);
+  const counterpartRating = document.createElement('span');
+  counterpartRating.className = 'counterpart-rating';
+  counterpartRating.textContent = ratingCopy(request.counterpartRating);
+  heading.append(eyebrow, title, counterpartRating);
   const status = document.createElement('span');
   status.className = `status ${request.status}`;
   status.textContent = labels[request.status];
@@ -126,6 +250,7 @@ function renderCard(request) {
     }
     card.append(actions);
   }
+  if (request.status === 'accepted') card.append(reviewBlock(request));
   return card;
 }
 
@@ -140,8 +265,8 @@ async function loadRequests() {
   message.hidden = false;
   message.textContent = 'Atualizando pedidos...';
   const select = role === 'professional'
-    ? 'id, client_name, client_phone, event_date, event_time, city, state, venue, guest_count, proposed_budget, message, status, professional_response, created_at, categories(name)'
-    : 'id, event_date, event_time, city, state, venue, guest_count, proposed_budget, message, status, professional_response, created_at, categories(name), professional_profiles(display_name, whatsapp)';
+    ? 'id, client_id, professional_id, client_name, client_phone, event_date, event_time, city, state, venue, guest_count, proposed_budget, message, status, professional_response, created_at, categories(name)'
+    : 'id, client_id, professional_id, event_date, event_time, city, state, venue, guest_count, proposed_budget, message, status, professional_response, created_at, categories(name), professional_profiles(display_name, whatsapp)';
   const { data, error } = await supabase.from('quote_requests').select(select).order('created_at', { ascending: false });
   if (error) {
     message.className = 'message error';
@@ -149,6 +274,35 @@ async function loadRequests() {
     return;
   }
   requests = data || [];
+  const counterpartIds = [...new Set(requests.map(item => role === 'professional' ? item.client_id : item.professional_id).filter(Boolean))];
+  const quoteIds = requests.map(item => item.id);
+  const [counterpartResult, requestResult, ownResult] = await Promise.all([
+    counterpartIds.length
+      ? supabase.from('review_summaries').select('reviewed_id, rating_average, rating_count').in('reviewed_id', counterpartIds)
+      : Promise.resolve({ data: [], error: null }),
+    quoteIds.length
+      ? supabase.from('reviews').select('id, quote_id, reviewer_id, reviewed_id, rating, comment, created_at').in('quote_id', quoteIds)
+      : Promise.resolve({ data: [], error: null }),
+    supabase.from('review_summaries').select('reviewed_id, rating_average, rating_count').eq('reviewed_id', currentSession.user.id)
+  ]);
+  reviews = requestResult.data || [];
+  const summaryRows = [...(counterpartResult.data || []), ...(ownResult.data || [])];
+  const summaries = new Map(summaryRows.map(item => [item.reviewed_id, {
+    average: Number(item.rating_average || 0),
+    count: Number(item.rating_count || 0)
+  }]));
+  requests.forEach(item => {
+    const counterpartId = role === 'professional' ? item.client_id : item.professional_id;
+    item.counterpartRating = summaries.get(counterpartId) || { average: 0, count: 0 };
+    item.myReview = reviews.find(review => review.quote_id === item.id && review.reviewer_id === currentSession.user.id) || null;
+  });
+  const ownSummary = summaries.get(currentSession.user.id) || { average: 0, count: 0 };
+  document.getElementById('my-rating').textContent = ownSummary.count
+    ? ownSummary.average.toFixed(1).replace('.', ',')
+    : '—';
+  document.getElementById('my-rating-count').textContent = ownSummary.count
+    ? `${ownSummary.count} ${ownSummary.count === 1 ? 'avaliação recebida' : 'avaliações recebidas'}`
+    : 'Sua reputação aparecerá aqui após a primeira avaliação.';
   document.getElementById('pending-count').textContent = String(requests.filter(item => item.status === 'pending').length);
   document.getElementById('total-count').textContent = String(requests.length);
   render();

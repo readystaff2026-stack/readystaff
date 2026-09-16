@@ -45,7 +45,7 @@ Os modelos aprovados do WhatsApp devem usar três variáveis no aviso de novo or
 - O profissional pode editar foto, apresentação, categorias, localização, disponibilidade, Instagram, valor por categoria, aceite de propostas e até três fotos opcionais no portfólio.
 - O contratante pode adicionar, trocar ou remover uma foto opcional na própria conta.
 - O contratante pode filtrar por profissão e orçamento máximo; o menor valor cadastrado orienta o filtro.
-- Pedidos de orçamento, painéis por tipo de conta, recuperação de senha e exclusão da própria conta estão implementados. Não há avaliações ou painel administrativo nesta versão.
+- Pedidos de orçamento, painéis por tipo de conta, recuperação de senha, exclusão da própria conta e avaliações recíprocas após pedidos aceitos estão implementados. Não há painel administrativo nesta versão.
 - Não processa pagamentos.
 - O logotipo oficial e duas imagens editoriais otimizadas ficam na pasta `assets`.
 - Nenhum telefone, e-mail comercial, avaliação ou profissional fictício foi publicado.

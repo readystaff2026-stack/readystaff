@@ -75,4 +75,17 @@ const file = { name: 'foto.png', type: 'image/png', size: 5242880 };
 context.testImage = file;
 assert.equal(await vm.runInContext('optimizeImage(testImage)', context), file);
 assert.equal(vm.runInContext('imageExtension(testImage)', context), 'png');
-console.log(`PASS: ${pages.length} pages, local links and anchors, auth hooks, homepage separation, category/city/budget filters, image upload regression.`);
+
+// Ratings regression: UI hooks and database protections must ship together.
+const dashboard = read('dashboard.js');
+const profile = read('profile.js');
+const ratingsMigration = read('supabase/migrations/20260915192854_ratings_system.sql');
+assert.match(dashboard, /from\('reviews'\)\.insert/);
+assert.match(dashboard, /request\.status === 'accepted'/);
+assert.match(profile, /from\('review_summaries'\)/);
+assert.match(read('professionals.js'), /from\('review_summaries'\)/);
+assert.match(ratingsMigration, /enable row level security/);
+assert.match(ratingsMigration, /q\.status = 'accepted'/);
+assert.match(ratingsMigration, /unique \(quote_id, reviewer_id\)/);
+assert.match(ratingsMigration, /security_invoker = true/);
+console.log(`PASS: ${pages.length} pages, local links and anchors, auth hooks, homepage separation, category/city/budget filters, image upload and reciprocal ratings regressions.`);

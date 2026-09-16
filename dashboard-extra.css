@@ -3,6 +3,11 @@
 .overview span { font-size:12px; text-transform:uppercase; letter-spacing:.1em; color:#79e0d3; font-weight:800; }
 .overview strong { font-size:30px; margin:8px 0; }
 .overview a,.overview small { margin-top:auto; color:#d9ebf3; }
+.reputation-summary { display:grid; grid-template-columns:auto 1fr auto; gap:18px; align-items:center; margin:0 0 22px; padding:22px 25px; border:1px solid #d8e5e8; border-radius:18px; background:#fff; box-shadow:0 8px 24px #07376008; }
+.reputation-symbol { width:54px; height:54px; display:grid; place-items:center; border-radius:15px; background:#fff5d9; color:#e5a815; font-size:28px; }
+.reputation-summary h2 { margin:4px 0 3px; color:var(--navy); font-size:22px; }
+.reputation-summary p:last-child { margin:0; color:var(--muted); font-size:13px; }
+.reputation-summary>strong { min-width:82px; color:var(--navy); font-size:42px; line-height:1; text-align:right; }
 .danger-zone { display:flex; align-items:center; justify-content:space-between; gap:25px; margin:10px 0 60px; padding:22px; border:1px solid #efc9c5; border-radius:16px; background:#fffafa; }
 .notification-settings { display:grid; grid-template-columns:.8fr 1.2fr; gap:34px; align-items:start; padding:25px; margin:0 0 22px; border:1px solid #cfe1dc; border-radius:18px; background:linear-gradient(135deg,#f7fbfa,#eef8f5); }
 .notification-copy h2 { margin:5px 0 8px; font-size:24px; color:var(--navy); }
@@ -28,4 +33,4 @@ dialog::backdrop { background:#052f4fb8; backdrop-filter:blur(4px); }
 .delete-shell .danger { width:100%; }
 .dialog-close { position:absolute; right:20px; top:20px; border:0; border-radius:8px; background:var(--soft); padding:8px 10px; color:var(--navy); font-weight:750; }
 .delete-message { margin:0 0 15px; padding:11px; border-radius:9px; background:#fff0ef; color:var(--danger); }
-@media(max-width:760px) { .overview{grid-template-columns:1fr}.notification-settings{grid-template-columns:1fr;padding:20px;gap:18px}.notification-actions{align-items:stretch;flex-direction:column}.notification-actions .button{width:100%}.danger-zone{align-items:flex-start;flex-direction:column}.danger-zone .button{width:100%} }
+@media(max-width:760px) { .overview{grid-template-columns:1fr}.reputation-summary{grid-template-columns:auto 1fr;padding:20px}.reputation-summary>strong{grid-column:1/-1;text-align:left;padding-top:4px}.notification-settings{grid-template-columns:1fr;padding:20px;gap:18px}.notification-actions{align-items:stretch;flex-direction:column}.notification-actions .button{width:100%}.danger-zone{align-items:flex-start;flex-direction:column}.danger-zone .button{width:100%} }

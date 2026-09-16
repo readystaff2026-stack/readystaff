@@ -17,6 +17,8 @@ let currentCategoryIds = new Set();
 let currentOfferings = new Map();
 let portfolio = [];
 let viewerProfile = null;
+let profileReviews = [];
+let profileRating = { average: 0, count: 0 };
 
 function setMessage(copy, type = '') {
   message.textContent = copy;
@@ -59,6 +61,45 @@ function offerPrice(offer) {
   const price = Number(offer?.price);
   if (price > 0) return currency.format(price);
   return 'Valor a combinar';
+}
+
+function profileRatingSummary() {
+  return profileRating;
+}
+
+function renderReviews() {
+  const summary = profileRatingSummary();
+  const heroRating = document.getElementById('profile-rating');
+  heroRating.textContent = summary.count
+    ? `★ ${summary.average.toFixed(1).replace('.', ',')} · ${summary.count} ${summary.count === 1 ? 'avaliação' : 'avaliações'}`
+    : 'Novo profissional · ainda sem avaliações';
+  document.getElementById('reviews-average').textContent = summary.count
+    ? summary.average.toFixed(1).replace('.', ',')
+    : '—';
+  document.getElementById('reviews-count').textContent = summary.count
+    ? `${summary.count} ${summary.count === 1 ? 'experiência compartilhada' : 'experiências compartilhadas'}`
+    : 'Este profissional receberá sua primeira avaliação após um serviço aceito.';
+  const target = document.getElementById('reviews-list');
+  target.replaceChildren();
+  profileReviews.forEach(review => {
+    const card = document.createElement('article');
+    card.className = 'public-review';
+    const top = document.createElement('div');
+    const stars = document.createElement('span');
+    stars.className = 'public-review-stars';
+    stars.textContent = `${'★'.repeat(Number(review.rating))}${'☆'.repeat(5 - Number(review.rating))}`;
+    stars.setAttribute('aria-label', `${review.rating} de 5 estrelas`);
+    const date = document.createElement('time');
+    date.dateTime = review.created_at;
+    date.textContent = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(new Date(review.created_at));
+    top.append(stars, date);
+    const comment = document.createElement('p');
+    comment.textContent = review.comment || 'Contratante avaliou com estrelas, sem comentário.';
+    const author = document.createElement('small');
+    author.textContent = 'Avaliação vinculada a um pedido aceito';
+    card.append(top, comment, author);
+    target.append(card);
+  });
 }
 
 function showAvatar() {
@@ -126,6 +167,7 @@ function renderPublicProfile() {
   const prices = offerItems().map(offer => Number(offer.price)).filter(value => value > 0);
   document.getElementById('profile-price').textContent = prices.length ? `A partir de ${currency.format(Math.min(...prices))}` : 'Valor a combinar';
   document.getElementById('profile-availability').textContent = profile.availability || 'Consulte diretamente';
+  renderReviews();
 
   const tags = document.getElementById('profile-tags');
   tags.replaceChildren(...categoryItems().map(category => {
@@ -485,7 +527,26 @@ async function start() {
     return;
   }
 
+  const [reviewsResult, summaryResult] = await Promise.all([
+    supabase
+      .from('reviews')
+      .select('id, rating, comment, created_at')
+      .eq('reviewed_id', profileId)
+      .order('created_at', { ascending: false })
+      .limit(20),
+    supabase
+      .from('review_summaries')
+      .select('rating_average, rating_count')
+      .eq('reviewed_id', profileId)
+      .maybeSingle()
+  ]);
+
   profile = data;
+  profileReviews = reviewsResult.data || [];
+  profileRating = {
+    average: Number(summaryResult.data?.rating_average || 0),
+    count: Number(summaryResult.data?.rating_count || 0)
+  };
   portfolio = [...(data.professional_portfolio || [])].sort((a, b) => a.sort_order - b.sort_order);
   currentCategoryIds = new Set((data.professional_categories || []).map(item => item.category_id));
   currentOfferings = new Map((data.professional_categories || []).map(item => [item.category_id, { category_id: item.category_id, price: item.price, accepts_proposals: item.accepts_proposals }]));

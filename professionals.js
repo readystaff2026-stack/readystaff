@@ -40,6 +40,12 @@ function offerings(profile) {
   return (profile.professional_categories || []).filter(item => item.categories);
 }
 
+function ratingLabel(profile) {
+  if (!profile.rating_count) return 'Novo profissional';
+  const average = Number(profile.rating_average).toFixed(1).replace('.', ',');
+  return `★ ${average} · ${profile.rating_count} ${profile.rating_count === 1 ? 'avaliação' : 'avaliações'}`;
+}
+
 function activeOffering(profile) {
   const list = offerings(profile);
   if (service.value) return list.find(item => item.categories.slug === service.value);
@@ -64,7 +70,10 @@ function renderProfile(profile) {
   const location = document.createElement('span');
   location.className = 'talent-location';
   location.textContent = [profile.city, profile.state].filter(Boolean).join(' / ');
-  info.append(name, location);
+  const rating = document.createElement('span');
+  rating.className = 'talent-rating';
+  rating.textContent = ratingLabel(profile);
+  info.append(name, location, rating);
 
   const tags = document.createElement('div');
   tags.className = 'talent-tags';
@@ -146,6 +155,22 @@ async function loadProfessionals() {
     if (version !== requestVersion) return;
     if (error) throw error;
     professionals = data || [];
+    const professionalIds = professionals.map(profile => profile.id);
+    if (professionalIds.length) {
+      const { data: ratingRows, error: ratingError } = await supabase
+        .from('review_summaries')
+        .select('reviewed_id, rating_average, rating_count')
+        .in('reviewed_id', professionalIds);
+      if (!ratingError) {
+        const grouped = new Map((ratingRows || []).map(item => [item.reviewed_id, item]));
+        professionals.forEach(profile => {
+          const summary = grouped.get(profile.id);
+          profile.rating_count = Number(summary?.rating_count || 0);
+          profile.rating_average = Number(summary?.rating_average || 0);
+        });
+      }
+    }
+    if (version !== requestVersion) return;
     empty.textContent = 'Nenhum profissional corresponde aos filtros. Tente outra categoria, cidade ou orçamento.';
     render();
   } catch (_error) {
