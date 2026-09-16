@@ -44,6 +44,15 @@ Mensagens, propostas, respostas e confirmações de serviço geram avisos ao out
 O envio é iniciado após ações no site. Um painel visível verifica avisos elegíveis a cada minuto. Falhas têm espera progressiva e limite de cinco tentativas; um administrador pode repetir somente avisos com falha ou configuração pendente. Não há agendamento independente com o painel fechado. O diagnóstico administrativo mostra somente indicadores de configuração, nunca segredos. Status `sent` significa aceite pela API, não confirmação de entrega ou leitura.
 
 ## Escopo e limites
+### SEO e tráfego orgânico
+`robots.txt`, `sitemap.xml` e `llms.txt` são públicos. O sitemap contém somente páginas editoriais canônicas, sem contas, conversas ou perfis. Não bloquear páginas privadas em robots: buscadores precisam ler seu `noindex`; segurança continua dependendo da autenticação e das políticas existentes.
+
+`servicos.html` apresenta as 21 categorias únicas sem exigir login, com orientações para contratação. Os links do rodapé permitem sua descoberta. JSON-LD identifica a organização, o site e páginas públicas, sem avaliações, endereços, contatos ou preços inventados. `llms.txt` é opcional e não é um fator de ranking do Google.
+
+Pendências externas: adicionar propriedade de domínio `readystaff.site` no Google Search Console, gerar o TXT de verificação, adicioná-lo ao DNS e enviar `sitemap.xml`. Não inventar o código de verificação. Analytics ainda não foi instalado: requer propriedade/ID reais e definição de controles de privacidade. Nenhuma promessa de ranking, indexação ou volume de palavras-chave. Páginas individuais por categoria/cidade e calendário editorial são a próxima etapa, após dados de demanda e atuação reais.
+
+Verificar com `node tests/seo-check.mjs` e `node tests/navigation-check.mjs`.
+
 - O cadastro e o login estão disponíveis para clientes e profissionais.
 - A abertura explica o serviço e termina nos dois caminhos de cadastro, sem abrir um modal automaticamente.
 - Perfis profissionais são publicados imediatamente, sem confirmação obrigatória de e-mail e sem fila de aprovação manual.

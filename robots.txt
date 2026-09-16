@@ -1,0 +1,6 @@
+# Public pages can be crawled. Private pages use noindex and authenticated access.
+# Do not block private HTML here: crawlers must be able to read its noindex.
+User-agent: *
+Allow: /
+
+Sitemap: https://readystaff.site/sitemap.xml

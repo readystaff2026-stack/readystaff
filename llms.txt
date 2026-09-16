@@ -1,0 +1,18 @@
+# ReadyStaff
+
+> Plataforma que conecta contratantes e profissionais de eventos. O cadastro é gratuito; profissionais informam seus valores e contratantes solicitam orçamentos. Disponibilidade, execução e pagamento são combinados diretamente entre as partes.
+
+## Informações públicas
+- [Início](https://readystaff.site/): apresentação da plataforma e caminhos de cadastro.
+- [Serviços para eventos](https://readystaff.site/servicos): descrição das categorias e orientações para contratar.
+- [Como funciona](https://readystaff.site/como-funciona): contratação, cadastro profissional e pedidos.
+- [Quem somos](https://readystaff.site/quem-somos): propósito da ReadyStaff.
+- [Ajuda](https://readystaff.site/ajuda): contas, fotos, pedidos e exclusão.
+- [Privacidade](https://readystaff.site/privacidade): tratamento de dados e direitos.
+- [Termos](https://readystaff.site/termos): regras de uso.
+
+## Limites
+- A plataforma não processa pagamentos nem garante disponibilidade ou contratação.
+- O painel, a administração, as conversas e a edição de perfil exigem acesso apropriado; não são conteúdo editorial para indexação.
+- Não interpretar imagens ilustrativas como profissionais cadastrados, avaliações ou trabalhos realizados.
+- Este arquivo é um resumo informativo opcional; não garante inclusão em respostas de IA.
