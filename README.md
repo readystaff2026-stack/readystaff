@@ -45,7 +45,12 @@ Os modelos aprovados do WhatsApp devem usar três variáveis no aviso de novo or
 - O profissional pode editar foto, apresentação, categorias, localização, disponibilidade, Instagram, valor por categoria, aceite de propostas e até três fotos opcionais no portfólio.
 - O contratante pode adicionar, trocar ou remover uma foto opcional na própria conta.
 - O contratante pode filtrar por profissão e orçamento máximo; o menor valor cadastrado orienta o filtro.
-- Pedidos de orçamento, painéis por tipo de conta, recuperação de senha, exclusão da própria conta e avaliações recíprocas após pedidos aceitos estão implementados. Não há painel administrativo nesta versão.
+- Pedidos de orçamento, painéis por tipo de conta, recuperação de senha e exclusão da própria conta estão implementados, sem alterar os uploads opcionais.
+- Novas avaliações recíprocas exigem pedido aceito, data anterior ao dia atual em Brasília e confirmação de conclusão pelas duas partes. Avaliações anteriores são preservadas.
+- Cada pedido oferece conversa privada, propostas com resposta do destinatário e relatos de problemas. Propostas não alteram o pedido original nem processam pagamento. Conversas abertas atualizam a cada 30 segundos; isso não acrescenta avisos externos de novas mensagens.
+- Contratantes podem salvar favoritos e filtrar por data (bloqueios informados, não garantia de disponibilidade), avaliação, categoria, cidade e valor, ordenando por preço ou nota.
+- Profissionais podem bloquear períodos na agenda e consultar orientações de preenchimento do perfil. Fotos continuam opcionais.
+- O painel administrativo em `admin.html` monitora contas, avaliações, relatos e a fila de notificações. Exige `app_metadata.readystaff_admin = true`, definido exclusivamente por administração confiável. Nenhuma conta recebe essa permissão automaticamente; não use `user_metadata` nem campos de cadastro para concedê-la.
 - Não processa pagamentos.
 - O logotipo oficial e duas imagens editoriais otimizadas ficam na pasta `assets`.
 - Nenhum telefone, e-mail comercial, avaliação ou profissional fictício foi publicado.

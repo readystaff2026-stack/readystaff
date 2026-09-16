@@ -78,7 +78,7 @@ function renderReviews() {
     : '—';
   document.getElementById('reviews-count').textContent = summary.count
     ? `${summary.count} ${summary.count === 1 ? 'experiência compartilhada' : 'experiências compartilhadas'}`
-    : 'Este profissional receberá sua primeira avaliação após um serviço aceito.';
+    : 'As avaliações são liberadas após a confirmação do serviço pelas duas partes.';
   const target = document.getElementById('reviews-list');
   target.replaceChildren();
   profileReviews.forEach(review => {
@@ -96,7 +96,7 @@ function renderReviews() {
     const comment = document.createElement('p');
     comment.textContent = review.comment || 'Contratante avaliou com estrelas, sem comentário.';
     const author = document.createElement('small');
-    author.textContent = 'Avaliação vinculada a um pedido aceito';
+    author.textContent = 'Avaliação vinculada a um pedido';
     card.append(top, comment, author);
     target.append(card);
   });

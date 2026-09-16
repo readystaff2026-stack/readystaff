@@ -1,4 +1,6 @@
 import { supabase } from './supabase-client.js';
+import { loadCompletions, serviceFinished, completionBlock, conversationBlock, reportBlock } from './workflow.js?v=20260916-1';
+import { initAccountTools } from './account-tools.js?v=20260916-1';
 
 const list = document.getElementById('requests');
 const message = document.getElementById('dashboard-message');
@@ -250,7 +252,9 @@ function renderCard(request) {
     }
     card.append(actions);
   }
-  if (request.status === 'accepted') card.append(reviewBlock(request));
+  if (request.status === 'accepted') card.append(completionBlock(request, loadRequests));
+  if (serviceFinished(request) || request.myReview) card.append(reviewBlock(request));
+  card.append(conversationBlock(request), reportBlock(request));
   return card;
 }
 
@@ -274,6 +278,8 @@ async function loadRequests() {
     return;
   }
   requests = data || [];
+  try { await loadCompletions(requests, currentSession.user.id); }
+  catch (_) { message.textContent = 'As confirmações de conclusão estão indisponíveis. Tente atualizar em instantes.'; }
   const counterpartIds = [...new Set(requests.map(item => role === 'professional' ? item.client_id : item.professional_id).filter(Boolean))];
   const quoteIds = requests.map(item => item.id);
   const [counterpartResult, requestResult, ownResult] = await Promise.all([
@@ -308,6 +314,10 @@ async function loadRequests() {
   render();
 }
 
+document.getElementById('refresh-requests').addEventListener('click', async event => {
+  const button=event.currentTarget;button.disabled=true;
+  try { await loadRequests(); } finally { button.disabled=false; }
+});
 document.querySelectorAll('[data-filter]').forEach(button => button.addEventListener('click', () => {
   activeFilter = button.dataset.filter;
   document.querySelectorAll('[data-filter]').forEach(item => item.classList.toggle('active', item === button));
@@ -401,10 +411,16 @@ async function start() {
     const headerLink = document.getElementById('header-link');
     headerLink.href = 'perfil.html?me=1';
     headerLink.textContent = 'Meu perfil público →';
-    const { data: professionalProfile } = await supabase.from('professional_profiles').select('display_name, bio, avatar_url, professional_categories(category_id)').eq('id', session.user.id).maybeSingle();
+    const { data: professionalProfile } = await supabase.from('professional_profiles').select('display_name, bio, avatar_url, whatsapp, availability, professional_categories(category_id,price)').eq('id', session.user.id).maybeSingle();
     const categoryCount = professionalProfile?.professional_categories?.length || 0;
     const complete = Boolean(professionalProfile?.display_name && professionalProfile?.bio && categoryCount);
     document.getElementById('profile-state').textContent = complete ? 'Publicado' : 'Complete agora';
+    try { await initAccountTools(session.user, role, professionalProfile); }
+    catch (_) { document.getElementById('account-tools').textContent = 'Não foi possível carregar as ferramentas de perfil e agenda. Atualize a página para tentar novamente.'; }
+  }
+  if (!professional) {
+    try { await initAccountTools(session.user, role, null); }
+    catch (_) { document.getElementById('account-tools').textContent = 'As ferramentas da conta estão indisponíveis no momento.'; }
   }
   await loadRequests();
   processNotifications();

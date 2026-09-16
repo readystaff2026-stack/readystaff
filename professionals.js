@@ -12,6 +12,14 @@ const gate = document.getElementById('access-gate');
 let professionals = [];
 let canBrowse = false;
 let requestVersion = 0;
+let accountId = '';
+let favorites = new Set();
+let blockedIds = new Set();
+const eventDate = document.getElementById('event-date-filter');
+const minimumRating = document.getElementById('rating-filter');
+const sortOrder = document.getElementById('sort-filter');
+const favoritesOnly = document.getElementById('favorites-filter');
+let consultedDate = '';
 const normalize = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 
 const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -89,17 +97,33 @@ function renderProfile(profile) {
   const bio = document.createElement('p');
   bio.textContent = profile.bio || 'Conheça este profissional e seus serviços para eventos.';
   link.append(avatar(profile), info, tags, price, bio);
-  return link;
+  if (eventDate?.value) link.append(Object.assign(document.createElement('small'), { className: 'date-match', textContent: 'Sem bloqueio informado para a data. Confirme com o profissional.' }));
+  const wrapper = document.createElement('div'); wrapper.className = 'talent-wrapper';
+  const favorite = document.createElement('button'); favorite.type = 'button'; favorite.className = 'favorite-button';
+  const saved = favorites.has(profile.id); favorite.textContent = saved ? '♥ Salvo' : '♡ Salvar';
+  favorite.setAttribute('aria-pressed', String(saved)); favorite.setAttribute('aria-label', `${saved ? 'Remover dos' : 'Adicionar aos'} favoritos: ${profile.display_name}`);
+  favorite.addEventListener('click', async () => {
+    favorite.disabled = true;
+    const result = saved
+      ? await supabase.from('professional_favorites').delete().eq('client_id', accountId).eq('professional_id', profile.id)
+      : await supabase.from('professional_favorites').insert({client_id:accountId,professional_id:profile.id});
+    if (result.error) { favorite.disabled = false; alert('Não foi possível atualizar seus favoritos. Tente novamente.'); return; }
+    saved ? favorites.delete(profile.id) : favorites.add(profile.id); render();
+  });
+  wrapper.append(link, favorite); return wrapper;
 }
 
 function matchingProfessionals() {
   const max = Number(budget.value);
-  return professionals.filter(profile => (!city.value || normalize(`${profile.city} ${profile.state}`).includes(normalize(city.value))) && offerings(profile).some(offer => {
+  const selected = professionals.filter(profile => (!favoritesOnly?.checked || favorites.has(profile.id)) && (!eventDate?.value || !blockedIds.has(profile.id)) && (Number(profile.rating_average || 0) >= Number(minimumRating?.value || 0)) && (!city.value || normalize(`${profile.city} ${profile.state}`).includes(normalize(city.value))) && offerings(profile).some(offer => {
     if (service.value && offer.categories.slug !== service.value) return false;
     if (!budget.value || !Number.isFinite(max)) return true;
     const price = Number(offer.price);
     return (price > 0 && price <= max) || offer.accepts_proposals;
   }));
+  if (sortOrder?.value === 'rating') selected.sort((a,b) => Number(b.rating_average || 0)-Number(a.rating_average || 0) || Number(b.rating_count || 0)-Number(a.rating_count || 0));
+  if (sortOrder?.value === 'price') selected.sort((a,b) => (Number(activeOffering(a)?.price)||Infinity)-(Number(activeOffering(b)?.price)||Infinity));
+  return selected;
 }
 
 function updateMinimum() {
@@ -120,6 +144,7 @@ function updateMinimum() {
 
 function render() {
   if (!canBrowse) return;
+  if (eventDate?.value && consultedDate !== eventDate.value) { container.replaceChildren(); count.textContent = 'Consultando bloqueios de agenda...'; return; }
   updateMinimum();
   const selected = matchingProfessionals();
   container.replaceChildren(...selected.map(renderProfile));
@@ -142,6 +167,11 @@ async function loadProfessionals() {
     if (version !== requestVersion) return;
     if (account?.role === 'professional') { location.replace('painel.html'); return; }
     if (accountError || account?.role !== 'client') return;
+    accountId = session.user.id;
+    const favoritesResult = await supabase.from('professional_favorites').select('professional_id').eq('client_id', accountId);
+    if (version !== requestVersion) return;
+    if (favoritesResult.error) throw favoritesResult.error;
+    favorites = new Set((favoritesResult.data || []).map(item => item.professional_id));
     canBrowse = true;
     gate.hidden = true;
     section.hidden = false;
@@ -172,7 +202,7 @@ async function loadProfessionals() {
     }
     if (version !== requestVersion) return;
     empty.textContent = 'Nenhum profissional corresponde aos filtros. Tente outra categoria, cidade ou orçamento.';
-    render();
+    await updateDateFilter();
   } catch (_error) {
     if (version !== requestVersion) return;
     empty.textContent = 'Não foi possível carregar os profissionais agora. Tente novamente em instantes.';
@@ -182,15 +212,46 @@ async function loadProfessionals() {
   }
 }
 
-document.addEventListener('readystaff:search', render);
+async function updateDateFilter() {
+  const selectedDate = eventDate?.value || '';
+  blockedIds = new Set();
+  consultedDate = '';
+  if (!canBrowse) return;
+  if (selectedDate) {
+    count.textContent = 'Consultando bloqueios de agenda...';
+    const { data, error } = await supabase.from('professional_unavailability').select('professional_id').lte('starts_on', selectedDate).gte('ends_on', selectedDate);
+    if (eventDate.value !== selectedDate || !canBrowse) return;
+    if (error) { count.textContent = 'Não foi possível consultar a agenda. Tente novamente.'; container.replaceChildren(); return; }
+    blockedIds = new Set((data || []).map(item => item.professional_id));
+    consultedDate = selectedDate;
+  }
+  render();
+}
+document.addEventListener('readystaff:search', updateDateFilter);
+if (favoritesOnly && new URLSearchParams(location.search).has('favoritos')) favoritesOnly.checked = true;
 document.addEventListener('readystaff:filters-changed', render);
+document.getElementById('reset')?.addEventListener('click', () => {
+  if (eventDate) eventDate.value = '';
+  if (minimumRating) minimumRating.value = '0';
+  if (sortOrder) sortOrder.value = 'recent';
+  if (favoritesOnly) favoritesOnly.checked = false;
+  updateDateFilter();
+});
 budget.addEventListener('input', render);
 city.addEventListener('input', render);
+eventDate?.addEventListener('change', updateDateFilter);
+minimumRating?.addEventListener('change', render);
+sortOrder?.addEventListener('change', render);
+favoritesOnly?.addEventListener('change', render);
 supabase.auth.onAuthStateChange(event => {
   if (event === 'SIGNED_OUT') {
     requestVersion++;
     canBrowse = false;
     professionals = [];
+    accountId = '';
+    favorites = new Set();
+    blockedIds = new Set();
+    consultedDate = '';
     container.replaceChildren();
     section.hidden = true;
     gate.hidden = false;
