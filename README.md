@@ -27,7 +27,9 @@ Confirme a prévia antes de associar readystaff.site pelo painel de domínios pe
 ## Supabase
 O frontend usa `@supabase/supabase-js` 2.116.0 com a chave pública do projeto. O banco mantém perfis privados de clientes, perfis profissionais publicados, preços por categoria, aceite de propostas, portfólio e mídias públicas. Todas as tabelas expostas usam RLS; cada profissional altera somente os próprios dados.
 
-### Avisos de orçamento
+### Avisos de pedidos e conversas
+Atualização autorizada: função ampliada implantada e disparadores de conversas reativados pela migration `activate_conversation_notifications`. Os avisos anteriores de orçamento permanecem ativos. A presença de parâmetros não comprova aprovação do modelo pela Meta nem entrega de mensagens: conferir o diagnóstico administrativo e testar com contas próprias.
+
 As migrations em `supabase/migrations` criam preferências protegidas e uma fila transacional. A Edge Function `process-notifications` tenta o WhatsApp primeiro, quando o usuário deu consentimento, e usa o e-mail como alternativa. Nenhuma chave secreta fica no frontend ou no repositório.
 
 Segredos esperados na Edge Function:
@@ -36,6 +38,10 @@ Segredos esperados na Edge Function:
 - `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_TEMPLATE_NEW_QUOTE` e `WHATSAPP_TEMPLATE_QUOTE_UPDATE` para WhatsApp.
 
 Os modelos aprovados do WhatsApp devem usar três variáveis no aviso de novo orçamento (nome, categoria e URL do painel) e quatro no aviso de atualização (nome, categoria, situação e URL do painel), no idioma `pt_BR`.
+
+Mensagens, propostas, respostas e confirmações de serviço geram avisos ao outro participante na mesma transação do cadastro. `WHATSAPP_TEMPLATE_CONVERSATION_UPDATE` pode definir um modelo próprio com as mesmas quatro variáveis; na ausência dele, usa-se o modelo de atualização. O conteúdo privado da mensagem não é enviado ao provedor: o aviso direciona ao painel.
+
+O envio é iniciado após ações no site. Um painel visível verifica avisos elegíveis a cada minuto. Falhas têm espera progressiva e limite de cinco tentativas; um administrador pode repetir somente avisos com falha ou configuração pendente. Não há agendamento independente com o painel fechado. O diagnóstico administrativo mostra somente indicadores de configuração, nunca segredos. Status `sent` significa aceite pela API, não confirmação de entrega ou leitura.
 
 ## Escopo e limites
 - O cadastro e o login estão disponíveis para clientes e profissionais.
@@ -47,7 +53,7 @@ Os modelos aprovados do WhatsApp devem usar três variáveis no aviso de novo or
 - O contratante pode filtrar por profissão e orçamento máximo; o menor valor cadastrado orienta o filtro.
 - Pedidos de orçamento, painéis por tipo de conta, recuperação de senha e exclusão da própria conta estão implementados, sem alterar os uploads opcionais.
 - Novas avaliações recíprocas exigem pedido aceito, data anterior ao dia atual em Brasília e confirmação de conclusão pelas duas partes. Avaliações anteriores são preservadas.
-- Cada pedido oferece conversa privada, propostas com resposta do destinatário e relatos de problemas. Propostas não alteram o pedido original nem processam pagamento. Conversas abertas atualizam a cada 30 segundos; isso não acrescenta avisos externos de novas mensagens.
+- Cada pedido oferece conversa privada, propostas com resposta do destinatário e relatos de problemas. Propostas não alteram o pedido original nem processam pagamento. Conversas abertas atualizam a cada 30 segundos; avisos externos respeitam as preferências e a configuração dos provedores.
 - Contratantes podem salvar favoritos e filtrar por data (bloqueios informados, não garantia de disponibilidade), avaliação, categoria, cidade e valor, ordenando por preço ou nota.
 - Profissionais podem bloquear períodos na agenda e consultar orientações de preenchimento do perfil. Fotos continuam opcionais.
 - O painel administrativo em `admin.html` monitora contas, avaliações, relatos e a fila de notificações. Exige `app_metadata.readystaff_admin = true`, definido exclusivamente por administração confiável. Nenhuma conta recebe essa permissão automaticamente; não use `user_metadata` nem campos de cadastro para concedê-la.

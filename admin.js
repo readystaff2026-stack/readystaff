@@ -21,6 +21,11 @@ async function start(){
   const {data:{user},error}=await supabase.auth.getUser();
   if(error||!user||user.app_metadata?.readystaff_admin!==true){feedback.textContent='Esta área está disponível apenas para administradores autorizados. Ter uma conta de profissional ou contratante não concede acesso administrativo.';return;}
   document.getElementById('admin-content').hidden=false;feedback.textContent='Acesso administrativo confirmado. Não compartilhe dados pessoais obtidos neste painel.';
+  const settings=el('section');settings.className='admin-item';settings.append(el('h2','Configuração dos avisos'));
+  const statusCopy=el('p','Consultando a configuração de envio...');settings.append(statusCopy);document.getElementById('admin-content').prepend(settings);
+  const {data:deliveryStatus,error:deliveryError}=await supabase.functions.invoke('process-notifications',{body:{operation:'status'}});
+  statusCopy.textContent=deliveryError?'Não foi possível consultar a configuração.':`E-mail: ${deliveryStatus?.email_configured?'configurado':'configuração pendente'}. WhatsApp: ${deliveryStatus?.whatsapp_credentials_configured && deliveryStatus?.whatsapp_new_quote_template_configured && deliveryStatus?.whatsapp_update_template_configured && deliveryStatus?.whatsapp_conversation_template_configured?'parâmetros configurados; confirme a aprovação dos modelos na Meta':'configuração pendente na Meta/Supabase'}.`;
+  settings.append(el('p','Os avisos respeitam as preferências do destinatário e são tentados após as ações no site. Falhas ficam registradas para novas tentativas ao usar o painel; não há rotina agendada de reenvio independente. “sent” significa aceito pela API de envio, não confirmação de entrega ou leitura.'));
   const stats=document.getElementById('admin-stats');
   for(const [table,label] of [['profiles','Contas cadastradas'],['reviews','Avaliações'],['quote_reports','Relatos registrados']]){
     const {count,error}=await supabase.from(table).select('id',{count:'exact',head:true});const card=el('article');card.append(el('strong',error?'—':String(count||0)),el('span',label));stats.append(card);
@@ -31,7 +36,11 @@ async function start(){
     list('quote_reports','id,quote_id,reason,status,created_at','reports-list',item=>[item.reason,`Pedido: ${item.quote_id}`,`${item.status==='open'?'Aguardando análise':'Triagem registrada'} · ${date(item.created_at)}`],(item,card)=>{
       if(item.status!=='open')return;const button=el('button','Marcar relato como analisado');button.type='button';button.className='button secondary';button.addEventListener('click',async()=>{button.disabled=true;const {data,error}=await supabase.from('quote_reports').update({status:'resolved'}).eq('id',item.id).select('id');if(error||!data?.length){button.disabled=false;button.textContent='Não foi possível atualizar. Tentar novamente';return;}button.textContent='Triagem registrada';});card.append(button);
     }),
-    list('notification_outbox','id,event_type,status,attempt_count,last_error,created_at','notifications-list',item=>[`${item.event_type} — ${item.status}`,`Tentativas: ${item.attempt_count}`,item.last_error||'Sem erro informado.',date(item.created_at)])
+    list('notification_outbox','id,event_type,status,attempt_count,last_error,created_at','notifications-list',item=>[`${item.event_type} — ${item.status}`,`Tentativas: ${item.attempt_count} (até 5 antes de intervenção)`,item.last_error||'Sem erro informado.',date(item.created_at)],(item,card)=>{
+      if(!['failed','configuration_pending'].includes(item.status))return;
+      const button=el('button','Tentar enviar este aviso novamente');button.type='button';button.className='button secondary';
+      button.addEventListener('click',async()=>{button.disabled=true;const {data,error}=await supabase.functions.invoke('process-notifications',{body:{operation:'retry',notification_id:item.id}});if(error||!data?.queued){button.disabled=false;button.textContent='Não foi possível solicitar. Atualize o painel';return;}button.textContent='Nova tentativa solicitada. Atualize para conferir o resultado.';});card.append(button);
+    })
   ]);
 }
 start().catch(()=>{feedback.textContent='Não foi possível abrir a administração. Entre novamente e tente atualizar.';});

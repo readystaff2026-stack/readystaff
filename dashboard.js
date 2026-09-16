@@ -1,6 +1,6 @@
 import { supabase } from './supabase-client.js';
-import { loadCompletions, serviceFinished, completionBlock, conversationBlock, reportBlock } from './workflow.js?v=20260916-1';
-import { initAccountTools } from './account-tools.js?v=20260916-1';
+import { loadCompletions, serviceFinished, completionBlock, conversationBlock, reportBlock } from './workflow.js?v=20260916-2';
+import { initAccountTools } from './account-tools.js?v=20260916-2';
 
 const list = document.getElementById('requests');
 const message = document.getElementById('dashboard-message');
@@ -426,3 +426,6 @@ async function start() {
   processNotifications();
 }
 start();
+setInterval(() => {
+  if (!document.hidden && currentSession?.user) processNotifications();
+}, 60000);

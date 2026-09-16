@@ -3,6 +3,10 @@ import { supabase } from './supabase-client.js';
 let userId = '';
 let confirmations = [];
 let completionsReady = false;
+async function dispatchNotices(quoteId) {
+  try { await supabase.functions.invoke('process-notifications', { body: { quote_id: quoteId } }); }
+  catch (_) { /* The transaction has already saved the notice for a later attempt. */ }
+}
 const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 const node = (tag, copy = '', className = '') => {
   const element = document.createElement(tag);
@@ -50,6 +54,7 @@ export function completionBlock(request, refresh) {
       button.disabled = true;
       const { error } = await supabase.from('quote_completions').insert({ quote_id: request.id, user_id: userId });
       if (error) { button.disabled = false; feedback.textContent = 'Não foi possível confirmar. Atualize os pedidos e tente novamente.'; return; }
+      dispatchNotices(request.id);
       await refresh();
     });
     box.append(button, feedback);
@@ -97,6 +102,7 @@ export function conversationBlock(request) {
                 actions.querySelectorAll('button').forEach(b => b.disabled = true);
                 const { error } = await supabase.from('quote_offer_responses').insert({ message_id: message.id, responder_id: userId, decision: value });
                 if (error) { feedback.textContent = 'Não foi possível responder. Atualize a conversa.'; actions.querySelectorAll('button').forEach(b => b.disabled = false); return; }
+                dispatchNotices(request.id);
                 await load();
               }); actions.append(button);
             } bubble.append(actions);
@@ -127,6 +133,7 @@ export function conversationBlock(request) {
       const { error } = await supabase.from('quote_messages').insert({ quote_id: request.id, sender_id: userId, body: input.value.trim(), proposed_amount: amount.value ? Number(amount.value) : null });
       button.disabled = false;
       if (error) { feedback.textContent = 'Não foi possível enviar. Sua mensagem foi mantida para tentar novamente.'; return; }
+      dispatchNotices(request.id);
       form.reset(); await load();
     }); details.append(form);
   } else details.append(node('p', 'Este pedido está encerrado. O histórico continua disponível, mas não aceita novas mensagens.'));

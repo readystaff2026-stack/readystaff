@@ -1,5 +1,5 @@
 import { supabase } from './supabase-client.js';
-import { todayInBrazil } from './workflow.js?v=20260916-1';
+import { todayInBrazil } from './workflow.js?v=20260916-2';
 const el = (tag, copy = '') => { const node = document.createElement(tag); node.textContent = copy; return node; };
 export async function initAccountTools(user, role, profile) {
   const target = document.getElementById('account-tools'); target.replaceChildren();
