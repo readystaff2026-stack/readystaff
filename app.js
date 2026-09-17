@@ -21,7 +21,8 @@ const services = [
   { name: 'Recepcionista de eventos', slug: 'recepcionista-de-eventos', copy: 'Credenciamento, lista de convidados e recepção especializada em eventos.' },
   { name: 'Confeiteiro', slug: 'confeiteiro', copy: 'Bolos, doces e sobremesas personalizadas para festas e eventos.' },
   { name: 'Salgadeiro', slug: 'salgadeiro', copy: 'Produção e serviço de salgados, petiscos e opções para recepções.' },
-  { name: 'Barista', slug: 'barista', copy: 'Preparo de cafés e bebidas especiais para experiências e eventos.' }
+  { name: 'Barista', slug: 'barista', copy: 'Preparo de cafés e bebidas especiais para experiências e eventos.' },
+  { name: 'Bar de Drinks para Eventos', slug: 'bar-de-drinks-para-eventos', copy: 'Serviço de bar para festas, casamentos e eventos, com estrutura e preparo de drinks. Os itens incluídos são combinados no orçamento.' }
 ];
 
 const cards = document.getElementById('cards');

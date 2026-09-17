@@ -68,6 +68,22 @@ elements.service.value = 'sem-perfis';
 vm.runInContext('updateMinimum()', context);
 assert.equal(elements.budget.min, undefined, 'Empty category clears minimum');
 
+// A complete bar service stays distinct from hiring an individual bartender.
+vm.runInContext(`professionals.push(
+  { id: 'bar', city: 'Brasília', state: 'DF', professional_categories: [{ price: 1800, accepts_proposals: false, categories: { slug: 'bar-de-drinks-para-eventos' } }] },
+  { id: 'bartender', city: 'Brasília', state: 'DF', professional_categories: [{ price: 300, accepts_proposals: false, categories: { slug: 'bartender' } }] }
+);`, context);
+elements.service.value = 'bar-de-drinks-para-eventos';
+elements['city-filter'].value = 'brasilia';
+elements.budget.value = '2000';
+assert.equal(vm.runInContext('matchingProfessionals()[0].id', context), 'bar');
+assert.equal(vm.runInContext('matchingProfessionals().length', context), 1);
+vm.runInContext('updateMinimum()', context);
+assert.equal(elements.budget.min, '1800', 'Bar category has its own minimum');
+elements.budget.value = '1700';
+assert.equal(vm.runInContext('matchingProfessionals().length', context), 0);
+vm.runInContext('professionals.splice(3)', context);
+
 // Upload regression: images that fit the bucket never require browser decoding.
 const imageSource = read('image-utils.js').replaceAll('export ', '');
 vm.runInContext(imageSource, context);

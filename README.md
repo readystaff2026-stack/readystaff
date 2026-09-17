@@ -47,7 +47,7 @@ O envio é iniciado após ações no site. Um painel visível verifica avisos el
 ### SEO e tráfego orgânico
 `robots.txt`, `sitemap.xml` e `llms.txt` são públicos. O sitemap contém somente páginas editoriais canônicas, sem contas, conversas ou perfis. Não bloquear páginas privadas em robots: buscadores precisam ler seu `noindex`; segurança continua dependendo da autenticação e das políticas existentes.
 
-`servicos.html` apresenta as 21 categorias únicas sem exigir login, com orientações para contratação. Os links do rodapé permitem sua descoberta. JSON-LD identifica a organização, o site e páginas públicas, sem avaliações, endereços, contatos ou preços inventados. `llms.txt` é opcional e não é um fator de ranking do Google.
+`servicos.html` apresenta as 22 categorias únicas sem exigir login, com orientações para contratação. Bar de Drinks para Eventos representa o serviço com estrutura, separado de Bartender e Barman; os itens incluídos são combinados no orçamento. A atualização aditiva do catálogo está em `supabase/seeds/bar-drinks.sql`, sem mudanças de estrutura, permissões ou ofertas existentes. Os links do rodapé permitem sua descoberta. JSON-LD identifica a organização, o site e páginas públicas, sem avaliações, endereços, contatos ou preços inventados. `llms.txt` é opcional e não é um fator de ranking do Google.
 
 Pendências externas: adicionar propriedade de domínio `readystaff.site` no Google Search Console, gerar o TXT de verificação, adicioná-lo ao DNS e enviar `sitemap.xml`. Não inventar o código de verificação. Analytics ainda não foi instalado: requer propriedade/ID reais e definição de controles de privacidade. Nenhuma promessa de ranking, indexação ou volume de palavras-chave. Páginas individuais por categoria/cidade e calendário editorial são a próxima etapa, após dados de demanda e atuação reais.
 
@@ -73,7 +73,7 @@ Verificar com `node tests/seo-check.mjs` e `node tests/navigation-check.mjs`.
 ## Verificações manuais antes da publicação
 Verificação local: `node tests/navigation-check.mjs` confere links, âncoras, elementos usados pelo cadastro, filtros e a regressão do envio direto de fotos até 5 MB. Não cria contas nem altera dados.
 1. Abrir index.html em desktop e celular.
-2. Testar as 21 categorias, filtro de palavra e filtro de orçamento (incluindo ausência de resultados).
+2. Testar as 22 categorias, filtro de palavra e filtro de orçamento (incluindo ausência de resultados).
 3. Testar Limpar filtros.
 4. Abrir detalhes, fechar pelo botão e por Escape.
 5. Abrir cadastro como cliente e como profissional.
