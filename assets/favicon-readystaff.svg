@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>ReadyStaff</title>
+  <rect width="256" height="256" rx="48" fill="#fff"/>
+  <g transform="translate(28 30)">
+    <path d="M16 2h108c23 0 40 10 48 28L94 82c-6 4-12 5-18 1L27 47c-8-6-11-12-11-22Z" fill="#073760"/>
+    <circle cx="84" cy="47" r="19" fill="#fff"/>
+    <path d="M31 67 83 103l87-60c4-3 6-1 6 4v13c0 18-7 32-21 42l-66 45c-4 3-8 3-12-1L24 78c-6-8 0-15 7-11Z" fill="#09b9ae"/>
+    <circle cx="30" cy="122" r="18" fill="#09b9ae"/>
+    <path d="M0 191v-15c0-21 13-35 30-35 14 0 23 8 31 22l17 28Z" fill="#09b9ae"/>
+    <path d="m86 148 63-44 51 87h-42v-19c0-15-9-26-21-26s-21 11-21 26v19h-12l-20-34c-2-4-2-6 2-9Z" fill="#073760"/>
+    <circle cx="138" cy="130" r="12" fill="#fff"/>
+  </g>
+</svg>

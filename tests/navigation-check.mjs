@@ -12,6 +12,8 @@ for (const path of pages) {
   const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
   assert.equal(ids.length, new Set(ids).size, `${path}: duplicate ID`);
   assert.match(html, /<html lang="pt-BR"/);
+  assert.match(html, /rel="icon" type="image\/svg\+xml" sizes="any" href="assets\/favicon-readystaff\.svg\?v=/);
+  assert.doesNotMatch(html, /rel="icon" href="assets\/logo-readystaff\.png"/);
   for (const match of html.matchAll(/\b(?:href|src)="([^"]+)"/g)) {
     const value = match[1];
     if (/^(https?:|data:|mailto:|tel:)/.test(value)) continue;
@@ -25,6 +27,7 @@ for (const path of pages) {
   }
 }
 const home = read('index.html');
+assert.match(read('assets/favicon-readystaff.svg'), /viewBox="0 0 256 256"/);
 const main = home.match(/<main[^>]*>([\s\S]*?)<\/main>/)[1];
 assert.doesNotMatch(main, /id="cards"|id="talent-cards"|category-image|talent-card/);
 assert.match(main, /assets\/event-team\.webp/);
