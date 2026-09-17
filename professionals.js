@@ -16,7 +16,6 @@ let accountId = '';
 let favorites = new Set();
 let blockedIds = new Set();
 const eventDate = document.getElementById('event-date-filter');
-const minimumRating = document.getElementById('rating-filter');
 const sortOrder = document.getElementById('sort-filter');
 const favoritesOnly = document.getElementById('favorites-filter');
 let consultedDate = '';
@@ -115,7 +114,7 @@ function renderProfile(profile) {
 
 function matchingProfessionals() {
   const max = Number(budget.value);
-  const selected = professionals.filter(profile => (!favoritesOnly?.checked || favorites.has(profile.id)) && (!eventDate?.value || !blockedIds.has(profile.id)) && (Number(profile.rating_average || 0) >= Number(minimumRating?.value || 0)) && (!city.value || normalize(`${profile.city} ${profile.state}`).includes(normalize(city.value))) && offerings(profile).some(offer => {
+  const selected = professionals.filter(profile => (!favoritesOnly?.checked || favorites.has(profile.id)) && (!eventDate?.value || !blockedIds.has(profile.id)) && (!city.value || normalize(`${profile.city} ${profile.state}`).includes(normalize(city.value))) && offerings(profile).some(offer => {
     if (service.value && offer.categories.slug !== service.value) return false;
     if (!budget.value || !Number.isFinite(max)) return true;
     const price = Number(offer.price);
@@ -232,7 +231,6 @@ if (favoritesOnly && new URLSearchParams(location.search).has('favoritos')) favo
 document.addEventListener('readystaff:filters-changed', render);
 document.getElementById('reset')?.addEventListener('click', () => {
   if (eventDate) eventDate.value = '';
-  if (minimumRating) minimumRating.value = '0';
   if (sortOrder) sortOrder.value = 'recent';
   if (favoritesOnly) favoritesOnly.checked = false;
   updateDateFilter();
@@ -240,7 +238,6 @@ document.getElementById('reset')?.addEventListener('click', () => {
 budget.addEventListener('input', render);
 city.addEventListener('input', render);
 eventDate?.addEventListener('change', updateDateFilter);
-minimumRating?.addEventListener('change', render);
 sortOrder?.addEventListener('change', render);
 favoritesOnly?.addEventListener('change', render);
 supabase.auth.onAuthStateChange(event => {

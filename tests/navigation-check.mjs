@@ -107,9 +107,10 @@ assert.match(ratingsMigration, /security_invoker = true/);
 // Marketplace filters preserve existing negotiation behavior.
 elements.service.value = 'garcom'; elements['city-filter'].value = ''; elements.budget.value = '';
 vm.runInContext("professionals[0].rating_average=4.8; professionals[1].rating_average=3.5; favorites=new Set(['b']); blockedIds=new Set(['a']);", context);
-elements['rating-filter'].value = '4';
-assert.equal(vm.runInContext('matchingProfessionals()[0].id',context),'a');
-elements['rating-filter'].value = '0'; elements['favorites-filter'].checked = true;
+assert.doesNotMatch(read('encontrar.html'), /rating-filter|Avaliação mínima|estrelas ou mais/);
+assert.doesNotMatch(read('professionals.js'), /minimumRating|rating-filter/);
+assert.equal(vm.runInContext('matchingProfessionals().length',context),2,'Ratings do not exclude professionals');
+elements['favorites-filter'].checked = true;
 assert.equal(vm.runInContext('matchingProfessionals()[0].id',context),'b');
 elements['favorites-filter'].checked = false; elements['event-date-filter'].value = '2026-12-01';
 assert.equal(vm.runInContext('matchingProfessionals()[0].id',context),'b','Blocked dates are excluded');
