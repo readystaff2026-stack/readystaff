@@ -327,26 +327,22 @@ const notificationForm = document.getElementById('notification-form');
 const notificationMessage = document.getElementById('notification-message');
 
 async function loadNotificationPreferences() {
-  const { data, error } = await supabase.from('notification_preferences').select('email_enabled, whatsapp_enabled').eq('user_id', currentSession.user.id).maybeSingle();
+  const { data, error } = await supabase.from('notification_preferences').select('email_enabled').eq('user_id', currentSession.user.id).maybeSingle();
   if (error) {
     notificationMessage.textContent = 'Não foi possível carregar as preferências.';
     return;
   }
   notificationForm.elements.email_enabled.checked = data?.email_enabled !== false;
-  notificationForm.elements.whatsapp_enabled.checked = Boolean(data?.whatsapp_enabled);
 }
 
 notificationForm.addEventListener('submit', async event => {
   event.preventDefault();
   const button = notificationForm.querySelector('[type="submit"]');
-  const whatsappEnabled = notificationForm.elements.whatsapp_enabled.checked;
   button.disabled = true;
   notificationMessage.textContent = 'Salvando...';
   const { error } = await supabase.from('notification_preferences').upsert({
     user_id: currentSession.user.id,
     email_enabled: notificationForm.elements.email_enabled.checked,
-    whatsapp_enabled: whatsappEnabled,
-    whatsapp_opted_in_at: whatsappEnabled ? new Date().toISOString() : null,
     updated_at: new Date().toISOString()
   }, { onConflict: 'user_id' });
   button.disabled = false;

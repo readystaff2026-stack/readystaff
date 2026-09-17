@@ -24,7 +24,7 @@ async function start(){
   const settings=el('section');settings.className='admin-item';settings.append(el('h2','Configuração dos avisos'));
   const statusCopy=el('p','Consultando a configuração de envio...');settings.append(statusCopy);document.getElementById('admin-content').prepend(settings);
   const {data:deliveryStatus,error:deliveryError}=await supabase.functions.invoke('process-notifications',{body:{operation:'status'}});
-  statusCopy.textContent=deliveryError?'Não foi possível consultar a configuração.':`E-mail: ${deliveryStatus?.email_configured?'configurado':'configuração pendente'}. WhatsApp: ${deliveryStatus?.whatsapp_credentials_configured && deliveryStatus?.whatsapp_new_quote_template_configured && deliveryStatus?.whatsapp_update_template_configured && deliveryStatus?.whatsapp_conversation_template_configured?'parâmetros configurados; confirme a aprovação dos modelos na Meta':'configuração pendente na Meta/Supabase'}.`;
+  statusCopy.textContent=deliveryError?'Não foi possível consultar a configuração.':`E-mail: ${deliveryStatus?.email_configured?'configurado':'configuração pendente'}.`;
   settings.append(el('p','Os avisos respeitam as preferências do destinatário e são tentados após as ações no site. Falhas ficam registradas para novas tentativas ao usar o painel; não há rotina agendada de reenvio independente. “sent” significa aceito pela API de envio, não confirmação de entrega ou leitura.'));
   const stats=document.getElementById('admin-stats');
   for(const [table,label] of [['profiles','Contas cadastradas'],['reviews','Avaliações'],['quote_reports','Relatos registrados']]){

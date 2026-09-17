@@ -97,6 +97,13 @@ assert.equal(vm.runInContext('imageExtension(testImage)', context), 'png');
 
 // Ratings regression: UI hooks and database protections must ship together.
 const dashboard = read('dashboard.js');
+const notificationSection = read('painel.html').match(/<section class="notification-settings"[\s\S]*?<\/section>/)[0];
+assert.match(notificationSection, /name="email_enabled"/);
+assert.doesNotMatch(notificationSection, /WhatsApp|whatsapp_enabled/);
+assert.doesNotMatch(dashboard, /notificationForm\.elements\.whatsapp_enabled|whatsapp_opted_in_at:/);
+assert.match(dashboard, /Falar pelo WhatsApp/);
+assert.match(dashboard, /professional_profiles\?\.whatsapp/);
+assert.match(read('profile.js'), /whatsapp/);
 const profile = read('profile.js');
 const ratingsMigration = read('supabase/migrations/20260915192854_ratings_system.sql');
 assert.match(dashboard, /from\('reviews'\)\.insert/);
