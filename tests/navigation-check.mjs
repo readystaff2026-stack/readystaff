@@ -34,6 +34,14 @@ assert.match(main, /assets\/event-team\.webp/);
 assert.doesNotMatch(home, /src="(?:app|professionals)\.js/);
 assert.match(main, /data-role="client"/);
 assert.match(main, /data-role="professional"/);
+const hero = main.match(/<section class="home-hero">([\s\S]*?)<\/section>/)[1];
+assert.match(hero, /data-open-auth data-role="client"/);
+assert.match(hero, /data-open-auth data-role="professional"/);
+assert.match(home, />Entrar \/ Cadastrar<\/button>/);
+assert.match(home, /id="mobile-account-link" href="index\.html#comecar"/);
+assert.match(home, /class="mobile-account-label">Cadastrar<\/span>/);
+assert.match(read('auth.js'), /setView\(role \? 'signup' : 'login'\)/);
+assert.match(read('auth.js'), /mobileAccountLink\.href = session \? 'painel\.html' : 'index\.html#comecar'/);
 assert.doesNotMatch(pages.map(read).join(''), /Plataforma em preparação|Como vai funcionar|A ReadyStaff está chegando/);
 for (const page of ['index.html', 'encontrar.html']) {
   const html = read(page);
