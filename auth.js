@@ -10,6 +10,14 @@ const message = document.getElementById('auth-message');
 const tabs = [...document.querySelectorAll('[data-auth-tab]')];
 const professionalFields = document.getElementById('professional-fields');
 const headerButton = document.getElementById('open-auth');
+const mobileAccountLink = document.getElementById('mobile-account-link');
+function syncAccountNavigation(session) {
+  headerButton.textContent = session ? 'Minha conta' : 'Entrar / Cadastrar';
+  if (!mobileAccountLink) return;
+  mobileAccountLink.href = session ? 'painel.html' : 'index.html#comecar';
+  const label = mobileAccountLink.querySelector('.mobile-account-label');
+  if (label) label.textContent = session ? 'Meu painel' : 'Cadastrar';
+}
 document.querySelector('.auth-note').textContent = 'Cadastro gratuito com acesso imediato. As fotos são opcionais.';
 const roleChoice = signupForm.querySelector('.role-options').parentElement;
 const authTitle = document.getElementById('auth-title');
@@ -392,7 +400,7 @@ async function showAccount(session) {
     renderClientPhoto(profile);
   }
 
-  headerButton.textContent = 'Minha conta';
+  syncAccountNavigation(session);
 }
 
 async function openAuth(role) {
@@ -543,7 +551,7 @@ document.getElementById('sign-out').addEventListener('click', async () => {
   currentSession = null;
   currentAccountProfile = null;
   clientPhotoEditor.hidden = true;
-  headerButton.textContent = 'Entrar / cadastrar';
+  syncAccountNavigation(null);
   setView('login');
   showMessage('Você saiu da sua conta.', 'success');
 });
@@ -551,7 +559,7 @@ document.getElementById('sign-out').addEventListener('click', async () => {
 const { data: { session } } = await supabase.auth.getSession();
 configureProfessionalSignup();
 currentSession = session;
-if (session) headerButton.textContent = 'Minha conta';
+syncAccountNavigation(session);
 const pageParams = new URLSearchParams(location.search);
 if (session && pageParams.get('reset') !== '1') {
   const { data: activeProfile } = await supabase.from('profiles').select('role').eq('id', session.user.id).maybeSingle();
@@ -573,7 +581,7 @@ if (pageParams.get('reset') === '1') {
 
 supabase.auth.onAuthStateChange((event, sessionValue) => {
   currentSession = sessionValue;
-  headerButton.textContent = sessionValue ? 'Minha conta' : 'Entrar / cadastrar';
+  syncAccountNavigation(sessionValue);
   if (event === 'PASSWORD_RECOVERY') {
     if (!modal.open) modal.showModal();
     setView('reset');
