@@ -1,5 +1,5 @@
-# Public pages can be crawled. Private pages use noindex and authenticated access.
-# Do not block private HTML here: crawlers must be able to read its noindex.
+# ReadyStaff — rastreamento público
+# Áreas privadas usam noindex no próprio HTML e não devem ser bloqueadas aqui.
 User-agent: *
 Allow: /
 
